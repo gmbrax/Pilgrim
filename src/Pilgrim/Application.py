@@ -1,11 +1,9 @@
-from src.Database.Database import Database
+from Pilgrim.Database import Database
 
 
 class Application:
-    database = Database()
-
     def __init__(self):
-        pass
+        self.database = Database()
 
     def run(self):
         self.database.create()
