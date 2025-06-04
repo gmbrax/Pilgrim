@@ -1,4 +1,4 @@
-from Pilgrim.Database import Database
+from pilgrim.database import Database
 
 
 class Application:

@@ -1,4 +1,4 @@
-from Pilgrim import Application
+from pilgrim.application import Application
 
 
 def main():

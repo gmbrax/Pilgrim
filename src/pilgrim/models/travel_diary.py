@@ -1,7 +1,6 @@
 from sqlalchemy import Column, String, Integer
 
-from Pilgrim import Application, Base
-
+from ..database import Base
 
 class TravelDiary(Base):
     __tablename__ = "TravelDiary"

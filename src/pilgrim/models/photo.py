@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
-from Pilgrim import Base
-from Pilgrim.Models.Entry import photo_entry_association
+from pilgrim.models.photo_in_entry import photo_entry_association
+from ..database import Base
 
 
 class Photo(Base):
