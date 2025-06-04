@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Table
+from sqlalchemy.orm import relationship
 
 from Pilgrim import Base
 
@@ -15,4 +16,8 @@ class Entry(Base):
     title = Column(String)
     text = Column(String)
     date = Column(String)
+    photos = relationship(
+        "Photo",
+        secondary=photo_entry_association,
+        back_populates="entries")
     fk_TravelDiary_id = Column(Integer, ForeignKey("TravelDiary.id"))
