@@ -5,10 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0a7f92e2-b44a-4dfe-8e01-136d1c0c18be" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/Pilgrim/Models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Pilgrim.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Pilgrim.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Pilgrim/Models/Photo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Pilgrim/TravelDiary.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/Pilgrim/Models/TravelDiary.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Pilgrim/Models/Entry.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/Pilgrim/Models/Entry.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Pilgrim/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/Pilgrim/__init__.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -24,20 +23,25 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="proposed_changes" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "gmbrax"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;gmbrax&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/gmbrax/Pilgrim.git",
-    "accountId": "213d8456-c67d-4cfd-99a6-337d47c35b4a"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/gmbrax/Pilgrim.git&quot;,
+    &quot;accountId&quot;: &quot;213d8456-c67d-4cfd-99a6-337d47c35b4a&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
 }</component>
@@ -54,7 +58,7 @@
     "Python.main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "proposed__changes",
+    "git-widget-placeholder": "master",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
