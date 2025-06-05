@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from pilgrim.models.photo_in_entry import photo_entry_association
@@ -19,6 +19,8 @@ class Photo(Base):
         secondary=photo_entry_association,
         back_populates="photos"
     )
+
+    fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"))
 
     def __init__(self, filepath, name, addition_date=None, caption=None, entries=None, **kw: Any):
         super().__init__(**kw)
