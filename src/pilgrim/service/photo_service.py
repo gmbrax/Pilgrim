@@ -43,4 +43,3 @@ class PhotoService:
             self.session.refresh(excluded)
             return excluded
         return None
-

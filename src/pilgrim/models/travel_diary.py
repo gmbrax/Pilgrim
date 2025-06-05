@@ -5,7 +5,7 @@ from sqlalchemy import Column, String, Integer
 from ..database import Base
 
 class TravelDiary(Base):
-    __tablename__ = "TravelDiary"
+    __tablename__ = "travel_diaries"
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
