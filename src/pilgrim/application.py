@@ -1,4 +1,5 @@
 from pilgrim.database import Database
+from pilgrim.service.servicemanager import ServiceManager
 
 
 class Application:
@@ -7,3 +8,9 @@ class Application:
 
     def run(self):
         self.database.create()
+
+    def get_service_manager(self):
+        session = self.database.session()
+        session_manager = ServiceManager()
+        session_manager.set_session(session)
+        return session_manager
