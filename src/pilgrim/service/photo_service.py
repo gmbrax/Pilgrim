@@ -1,15 +1,17 @@
 from pathlib import Path
 from typing import List
 
-from pilgrim import Photo
+from pilgrim import Photo, TravelDiary
 
 
 class PhotoService:
     def __init__(self, session):
         self.session = session
 
-    def create(self, filepath:Path, name:str, addition_date=None, caption=None,) -> Photo:
-
+    def create(self, filepath:Path, name:str, travel_diary_id, addition_date=None, caption=None, ) -> Photo | None:
+        travel_diary = self.session.query(TravelDiary).filter(TravelDiary.id == travel_diary_id).first()
+        if not travel_diary:
+            return None
         new_photo = Photo(filepath, name, addition_date=addition_date, caption=caption)
         self.session.add(new_photo)
         self.session.commit()
