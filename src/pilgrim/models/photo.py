@@ -20,7 +20,7 @@ class Photo(Base):
         back_populates="photos"
     )
 
-    fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"))
+    fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"),nullable=False)
 
     def __init__(self, filepath, name, addition_date=None, caption=None, entries=None, **kw: Any):
         super().__init__(**kw)

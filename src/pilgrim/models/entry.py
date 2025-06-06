@@ -17,7 +17,7 @@ class Entry(Base):
         "Photo",
         secondary=photo_entry_association,
         back_populates="entries")
-    fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"))
+    fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"),nullable=False)
     def __init__(self, title: str, text: str, date: str, travel_diary_id: int, **kw: Any):
         super().__init__(**kw)
         self.title = title

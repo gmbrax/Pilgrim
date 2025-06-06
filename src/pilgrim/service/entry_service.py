@@ -16,8 +16,6 @@ class EntryService:
         self.session.add(new_entry)
         self.session.commit()
         self.session.refresh(new_entry)
-
-
         return new_entry
 
     def read_by_id(self,entry_id:int)->Entry:
