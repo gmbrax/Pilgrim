@@ -1,0 +1,25 @@
+
+.dialog-container{
+    content-align: center top;
+}
+
+.app-title{
+    dock: top;
+    height: 3;
+    content-align: center middle;
+    text-style: bold;
+    color: $accent;
+}
+
+.actions-buttons{
+    height: auto;
+    margin: 1 0;
+    align: center middle;
+}
+
+.tips{
+    dock: bottom;
+    height: 4;
+    content-align: center middle;
+    color: $text-muted;
+}

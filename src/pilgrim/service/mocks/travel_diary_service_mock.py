@@ -6,9 +6,10 @@ class TravelDiaryServiceMock(TravelDiaryService):
     def __init__(self):
         super().__init__(None)
         self.mock_data = {
-            1:TravelDiary(id=1,name="Montreal")
+            1:TravelDiary(id=1,name="Montreal"),
+            2:TravelDiary(id=2,name="Rio de Janeiro"),
         }
-        self._next_id = 2
+        self._next_id = 3
 
     def create(self, name: str):
         new_travel_diary = TravelDiary(id=self._next_id,name=name)

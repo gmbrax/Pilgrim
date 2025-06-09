@@ -18,18 +18,18 @@ class TravelDiaryService:
     def read_all(self):
         return self.session.query(TravelDiary).all()
 
-    def update(self, travel_diary_src:TravelDiary,travel_diary_dst:TravelDiary):
-        original = self.read_by_id(travel_diary_src.id)
+    def update(self, travel_diary_id: TravelDiary, travel_diary_dst: TravelDiary):
+        original = self.read_by_id(travel_diary_id.id)
         if original is not None:
             original.name = travel_diary_dst.name
             self.session.commit()
             self.session.refresh(original)
         return original
 
-    def delete(self, travel_diary_src:TravelDiary):
-        excluded = self.read_by_id(travel_diary_src.id)
+    def delete(self, travel_diary_id: TravelDiary):
+        excluded = self.read_by_id(travel_diary_id.id)
         if excluded is not None:
-            self.session.delete(travel_diary_src)
+            self.session.delete(travel_diary_id)
             self.session.commit()
             return excluded
         return None
