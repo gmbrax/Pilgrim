@@ -1,5 +1,5 @@
-from pilgrim.database import Database
-from pilgrim.service.servicemanager import ServiceManager
+from src.database import Database
+from src.service.servicemanager import ServiceManager
 
 
 class Application:

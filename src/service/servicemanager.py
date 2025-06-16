@@ -1,5 +1,5 @@
-from pilgrim.service.entry_service import EntryService
-from pilgrim.service.travel_diary_service import TravelDiaryService
+from src.service.entry_service import EntryService
+from src.service.travel_diary_service import TravelDiaryService
 
 
 class ServiceManager:

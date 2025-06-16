@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import List
 
-from pilgrim import Photo, TravelDiary
+from src.models.photo import Photo
+from src.models.travel_diary import TravelDiary
 
 
 class PhotoService:

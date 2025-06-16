@@ -3,8 +3,8 @@ from typing import Any
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from pilgrim.models.photo_in_entry import photo_entry_association
-from ..database import Base
+from src.models.photo_in_entry import photo_entry_association
+from src.database import Base
 
 
 class Entry(Base):
