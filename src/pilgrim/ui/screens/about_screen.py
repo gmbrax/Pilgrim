@@ -17,12 +17,16 @@ class AboutScreen(Screen[bool]):
         super().__init__()
         self.header = Header()
         self.footer = Footer()
-        self.app_title = Label("Pilgrim", id="AboutScreen_AboutTitle")
-        self.content = Label("A TUI Based Travel Diary Application", id="AboutScreen_AboutContent")
-        self.version = Label("Version: 0.0.1", id="AboutScreen_AboutVersion")
+        self.app_title = Label("Pilgrim", id="AboutScreen_AboutTitle",classes="AboutScreen_AboutTitle")
+        self.content = Label("A TUI Based Travel Diary Application", id="AboutScreen_AboutContent",
+                             classes="AboutScreen_AboutContent")
+        self.version = Label("Version: 0.0.1", id="AboutScreen_AboutVersion",
+                             classes="AboutScreen_AboutVersion")
         self.developer = Label("Developed By: Gustavo Henrique Miranda ", id="AboutScreen_AboutAuthor")
-        self.contact = Label("git.gustavomiranda.xyz", id="AboutScreen_AboutContact")
-        self.license = TextArea(id="AboutScreen_AboutLicense")
+        self.contact = Label("git.gustavomiranda.xyz", id="AboutScreen_AboutContact",
+                             classes="AboutScreen_AboutContact")
+        self.license = TextArea(id="AboutScreen_AboutLicense",
+                                classes="AboutScreen_AboutLicense")
         self.license.text = """Copyright (c) 2025 GHMiranda. 
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -35,9 +39,11 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
         self.license.read_only = True
-        self.about_container = Container(self.app_title, self.content, self.version, self.developer, self.contact,
-                                         id="AboutScreen_SubContainer")
-        self.container = Container(self.about_container, self.license, id="AboutScreen_AboutContainer")
+        self.about_container = Container(self.app_title, self.content, self.version, self.developer,
+                                         self.contact, id="AboutScreen_SubContainer",
+                                         classes="AboutScreen_SubContainer")
+        self.container = Container(self.about_container, self.license, id="AboutScreen_AboutContainer",
+                                   classes="AboutScreen_AboutContainer")
 
     def compose(self) -> ComposeResult:
         yield self.header
@@ -51,8 +57,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         elif "about-info-button" in event.button.classes:
             self.notify("Mais informações seriam exibidas aqui!", title="Info")
 
-    def action_dismiss(self) -> None:
-        """Fecha o about box usando dismiss."""
+    def action_dismiss(self, **kwargs) -> None:
+        """Fecha o about box usando dismiss.
+        :param **kwargs:
+        """
         self.dismiss(False)
 
     def on_key(self, event) -> None:
