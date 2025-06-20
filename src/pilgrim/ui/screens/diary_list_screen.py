@@ -8,6 +8,7 @@ from textual.binding import Binding
 from textual.containers import Vertical, Container, Horizontal
 
 from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.ui.screens.about_screen import AboutScreen
 from pilgrim.ui.screens.edit_diary_modal import EditDiaryModal
 from pilgrim.ui.screens.new_diary_modal import NewDiaryModal
 
@@ -284,3 +285,6 @@ class DiaryListScreen(Screen):
     def action_open_selected_diary(self):
         """Ação do binding ENTER"""
         self.action_open_diary()
+
+    def action_about_cmd(self):
+        self.app.push_screen(AboutScreen())

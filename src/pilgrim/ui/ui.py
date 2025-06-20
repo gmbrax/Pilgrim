@@ -1,8 +1,12 @@
 from pathlib import Path
+from typing import Iterable
 
-from textual.app import App
+from textual.app import App, SystemCommand
+from textual.screen import Screen
+
 
 from pilgrim.service.servicemanager import ServiceManager
+from pilgrim.ui.screens.about_screen import AboutScreen
 from pilgrim.ui.screens.diary_list_screen import DiaryListScreen
 
 CSS_FILE_PATH = Path(__file__).parent / "styles" / "pilgrim.css"
@@ -11,11 +15,38 @@ CSS_FILE_PATH = Path(__file__).parent / "styles" / "pilgrim.css"
 class UIApp(App):
     CSS_PATH = CSS_FILE_PATH
 
-    def __init__(self,service_manager: ServiceManager):
-        super().__init__()
+    def __init__(self,service_manager: ServiceManager, **kwargs):
+        super().__init__(**kwargs)
         self.service_manager = service_manager
 
 
     def on_mount(self) -> None:
         """Chamado quando a app inicia. Carrega a tela principal."""
         self.push_screen(DiaryListScreen())
+
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
+        """Return commands based on current screen."""
+
+        # Commands for DiaryListScreen
+        if isinstance(screen, DiaryListScreen):
+            yield SystemCommand(
+                "About Pilgrim",
+                "Open About Pilgrim",
+                screen.action_about_cmd
+            )
+
+        elif isinstance(screen, AboutScreen):
+            yield SystemCommand(
+                "Back to List",
+                "Return to the diary list",
+                screen.dismiss
+            )
+
+
+
+        # Always include quit command
+        yield SystemCommand(
+            "Quit Application",
+            "Exit Pilgrim",
+            self.action_quit
+        )
