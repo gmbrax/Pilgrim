@@ -13,11 +13,11 @@ class EditDiaryModal(ModalScreen[tuple[int,str]]):
         super().__init__()
         self.diary_id = diary_id
         self.current_diary_name = self.app.service_manager.get_travel_diary_service().read_by_id(self.diary_id).name
-        self.name_input = Input(value=self.current_diary_name, id="edit_diary_name_input")
+        self.name_input = Input(value=self.current_diary_name, id="edit_diary_name_input",classes="EditDiaryModal-NameInput")
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="edit_diary_dialog"):
-            yield Label(f"Editar Diário: {self.current_diary_name}", classes="dialog-title")
+        with Vertical(id="edit_diary_dialog", classes="EditDiaryModal-Dialog"):
+            yield Label(f"Editar Diário: {self.current_diary_name}", classes="EditDiaryModal-Title")
             yield Label("Novo Nome do Diário:")
             yield self.name_input
             with Horizontal(classes="dialog-buttons"):
