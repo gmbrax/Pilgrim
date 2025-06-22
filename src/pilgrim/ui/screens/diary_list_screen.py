@@ -11,6 +11,7 @@ from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.ui.screens.about_screen import AboutScreen
 from pilgrim.ui.screens.edit_diary_modal import EditDiaryModal
 from pilgrim.ui.screens.new_diary_modal import NewDiaryModal
+from pilgrim.ui.screens.edit_entry_screen import EditEntryScreen
 
 
 class DiaryListScreen(Screen):
@@ -245,7 +246,11 @@ class DiaryListScreen(Screen):
         """Ação para abrir diário selecionado"""
         if self.selected_diary_index is not None:
             diary_id = self.diary_id_map.get(self.selected_diary_index)
-            self.notify(f"Abrindo diário ID: {diary_id}")
+            if diary_id:
+                self.app.push_screen(EditEntryScreen(diary_id=diary_id))
+                self.notify(f"Opening diary ID: {diary_id}")
+            else:
+                self.notify("Invalid diary ID")
         else:
             self.notify("Selecione um diário para abrir")
 

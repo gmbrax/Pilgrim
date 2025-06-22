@@ -8,6 +8,7 @@ from textual.screen import Screen
 from pilgrim.service.servicemanager import ServiceManager
 from pilgrim.ui.screens.about_screen import AboutScreen
 from pilgrim.ui.screens.diary_list_screen import DiaryListScreen
+from pilgrim.ui.screens.edit_entry_screen import EditEntryScreen
 
 CSS_FILE_PATH = Path(__file__).parent / "styles" / "pilgrim.css"
 
@@ -42,7 +43,12 @@ class UIApp(App):
                 screen.dismiss
             )
 
-
+        elif isinstance(screen, EditEntryScreen):
+            yield SystemCommand(
+                "Back to Diary List",
+                "Return to the diary list",
+                screen.action_back_to_list
+            )
 
         # Always include quit command
         yield SystemCommand(

@@ -170,3 +170,105 @@ Screen.-modal {
     margin: 0 1;
     width: 1fr;
 }
+
+/* EditEntryScreen Styles */
+.EditEntryScreen-sub-header {
+    layout: horizontal;
+    background: $primary-darken-1;
+    height: 1;
+    padding: 0 1;
+    align: center middle;
+    width: 100%;
+}
+
+.EditEntryScreen-diary-info {
+    width: auto;
+    color: $text-muted;
+    margin-right: 2;
+}
+
+.EditEntryScreen-entry-info {
+    width: auto;
+    color: $text;
+    margin-right: 1;
+}
+
+.EditEntryScreen-spacer {
+    width: 1fr;
+}
+
+.EditEntryScreen-status-indicator {
+    width: auto;
+    padding: 0 1;
+    content-align: center middle;
+}
+
+.EditEntryScreen-status-indicator.saved {
+    background: #2E8B57; /* SeaGreen */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.not-saved {
+    background: #B22222; /* FireBrick */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.new {
+    background: #4682B4; /* SteelBlue */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.read-only {
+    background: #696969; /* DimGray */
+    color: $text-muted;
+}
+
+.EditEntryScreen-main-container {
+    background: bisque;
+    margin: 0;
+}
+
+.EditEntryScreen-text-entry {
+    width: 100%;
+    height: 1fr;
+    border: none;
+}
+
+/* RenameEntryModal Styles */
+.RenameEntryModal-dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.RenameEntryModal-title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+.RenameEntryModal-label {
+    margin-bottom: 1;
+}
+
+.RenameEntryModal-name-input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.RenameEntryModal-buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.RenameEntryModal-buttons Button {
+    margin: 0 1;
+    width: 1fr;
+}
