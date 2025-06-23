@@ -79,8 +79,10 @@ class EditEntryScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when the screen is mounted"""
-        self.refresh_entries()
+        # First update diary info, then refresh entries
         self.update_diary_info()
+        # Use a small delay to ensure diary info is loaded before refreshing entries
+        self.set_timer(0.1, self.refresh_entries)
 
     def update_diary_info(self):
         """Updates diary information"""
@@ -92,6 +94,9 @@ class EditEntryScreen(Screen):
             if diary:
                 self.diary_name = diary.name
                 self.diary_info.update(f"Diary: {self.diary_name}")
+                self.notify(f"Loaded diary: {self.diary_name}")
+            else:
+                self.notify(f"Diary with ID {self.diary_id} not found")
         except Exception as e:
             self.notify(f"Error loading diary info: {str(e)}")
 
@@ -193,6 +198,10 @@ class EditEntryScreen(Screen):
     def _update_entry_display(self):
         """Updates the display of the current entry"""
         if not self.entries and not self.is_new_entry:
+            # Ensure diary name is loaded
+            if self.diary_name == "Unknown Diary":
+                self.update_diary_info()
+            
             self.text_entry.text = f"No entries found for diary '{self.diary_name}'\n\nPress Ctrl+N to create a new entry."
             self.text_entry.read_only = True
             self._original_content = self.text_entry.text
