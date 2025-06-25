@@ -293,3 +293,7 @@ class DiaryListScreen(Screen):
 
     def action_about_cmd(self):
         self.app.push_screen(AboutScreen())
+
+    def action_quit(self):
+        """Action to quit the application"""
+        self.app.exit()
