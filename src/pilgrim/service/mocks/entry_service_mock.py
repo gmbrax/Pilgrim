@@ -33,30 +33,30 @@ class EntryServiceMock(EntryService):
         }
         self._next_id = 11
 
-    # Métodos síncronos (mantidos para compatibilidade)
+    # Synchronous methods (kept for compatibility)
     def create(self, travel_diary_id: int, title: str, text: str, date: str) -> Entry:
-        """Versão síncrona"""
+        """Synchronous version"""
         new_entry = Entry(title, text, date, travel_diary_id, id=self._next_id)
         self.mock_data[self._next_id] = new_entry
         self._next_id += 1
         return new_entry
 
     def read_by_id(self, entry_id: int) -> Entry | None:
-        """Versão síncrona"""
+        """Synchronous version"""
         return self.mock_data.get(entry_id)
 
     def read_all(self) -> List[Entry]:
-        """Versão síncrona"""
+        """Synchronous version"""
         return list(self.mock_data.values())
 
     def read_by_travel_diary_id(self, travel_diary_id: int) -> List[Entry]:
-        """Versão síncrona - lê entradas por diário"""
+        """Synchronous version - reads entries by diary"""
         return [entry for entry in self.mock_data.values() if entry.fk_travel_diary_id == travel_diary_id]
 
     def read_paginated(self, travel_diary_id: int, page: int = 1, page_size: int = 5) -> Tuple[List[Entry], int, int]:
-        """Versão síncrona - lê entradas paginadas por diário"""
+        """Synchronous version - reads paginated entries by diary"""
         entries = self.read_by_travel_diary_id(travel_diary_id)
-        entries.sort(key=lambda x: x.id, reverse=True)  # Mais recentes primeiro
+        entries.sort(key=lambda x: x.id, reverse=True)  # Most recent first
         
         total_entries = len(entries)
         total_pages = (total_entries + page_size - 1) // page_size
@@ -69,7 +69,7 @@ class EntryServiceMock(EntryService):
         return page_entries, total_pages, total_entries
 
     def update(self, entry_src: Entry, entry_dst: Entry) -> Entry | None:
-        """Versão síncrona"""
+        """Synchronous version"""
         item_to_update = self.mock_data.get(entry_src.id)
         if item_to_update:
             item_to_update.title = entry_dst.title if entry_dst.title is not None else item_to_update.title
@@ -83,41 +83,41 @@ class EntryServiceMock(EntryService):
         return None
 
     def delete(self, entry_src: Entry) -> Entry | None:
-        """Versão síncrona"""
+        """Synchronous version"""
         return self.mock_data.pop(entry_src.id, None)
 
-    # Métodos assíncronos (principais)
+    # Async methods (main)
     async def async_create(self, travel_diary_id: int, title: str, text: str, date: str) -> Entry:
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.create(travel_diary_id, title, text, date)
 
     async def async_read_by_id(self, entry_id: int) -> Entry | None:
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.read_by_id(entry_id)
 
     async def async_read_all(self) -> List[Entry]:
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.read_all()
 
     async def async_read_by_travel_diary_id(self, travel_diary_id: int) -> List[Entry]:
-        """Versão assíncrona - lê entradas por diário"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version - reads entries by diary"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.read_by_travel_diary_id(travel_diary_id)
 
     async def async_read_paginated(self, travel_diary_id: int, page: int = 1, page_size: int = 5) -> Tuple[List[Entry], int, int]:
-        """Versão assíncrona - lê entradas paginadas por diário"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version - reads paginated entries by diary"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.read_paginated(travel_diary_id, page, page_size)
 
     async def async_update(self, entry_src: Entry, entry_dst: Entry) -> Entry | None:
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.update(entry_src, entry_dst)
 
     async def async_delete(self, entry_src: Entry) -> Entry | None:
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.delete(entry_src)

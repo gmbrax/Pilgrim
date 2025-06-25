@@ -5,7 +5,7 @@ from textual.widgets import Header, Footer, Button, Label, TextArea
 from textual.containers import Container
 
 class AboutScreen(Screen[bool]):
-    """Tela para exibir informações sobre a aplicação."""
+    """Screen to display application information."""
 
     TITLE = "Pilgrim - About"
 
@@ -51,20 +51,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         yield self.footer
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Lida com os cliques dos botões."""
+        """Handles button clicks."""
         if "about-close-button" in event.button.classes:
             self.dismiss(False)
         elif "about-info-button" in event.button.classes:
-            self.notify("Mais informações seriam exibidas aqui!", title="Info")
+            self.notify("More information would be displayed here!", title="Info")
 
     def action_dismiss(self, **kwargs) -> None:
-        """Fecha o about box usando dismiss.
+        """Closes the about box using dismiss.
         :param **kwargs:
         """
         self.dismiss(False)
 
     def on_key(self, event) -> None:
-        """Intercepta teclas específicas."""
+        """Intercepts specific keys."""
         if event.key == "escape":
             self.dismiss(False)
             event.prevent_default()
