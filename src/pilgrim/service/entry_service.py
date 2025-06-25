@@ -1,5 +1,4 @@
 from typing import List
-
 from ..models.entry import Entry
 from ..models.travel_diary import TravelDiary
 
