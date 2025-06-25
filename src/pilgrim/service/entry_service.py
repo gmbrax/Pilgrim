@@ -1,4 +1,6 @@
+from datetime import datetime
 from typing import List
+
 from ..models.entry import Entry
 from ..models.travel_diary import TravelDiary
 
@@ -7,7 +9,7 @@ class EntryService:
     def __init__(self,session):
         self.session = session
 
-    def create(self, travel_diary_id:int, title: str, text: str, date: str, ):
+    def create(self, travel_diary_id:int, title: str, text: str, date: datetime, ):
         travel_diary = self.session.query(TravelDiary).filter(TravelDiary.id == travel_diary_id).first()
         if not travel_diary:
             return None
