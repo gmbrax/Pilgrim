@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
+
 class Database:
     def __init__(self):
         self.engine = create_engine(
@@ -11,10 +12,10 @@ class Database:
             echo=False,
             connect_args={"check_same_thread": False},
         )
-        self.session = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)
+        self.Session = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)
 
     def create(self):
         Base.metadata.create_all(self.engine)
 
     def get_db(self):
-        return self.session()
+        return self.Session()

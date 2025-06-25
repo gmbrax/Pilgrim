@@ -26,6 +26,6 @@ src-layout = true
 Homepage = "https://git.gustavomiranda.xyz/GHMiranda/Pilgrim"
 Issues = "https://git.gustavomiranda.xyz/GHMiranda/Pilgrim"
 [tool.hatch.build.targets.wheel]
-packages = ["src/pilgrim"]
+packages = ["src/Pilgrim"]
 [project.scripts]
-pilgrim = "pilgrim:main"
+pilgrim = "Pilgrim:main"
