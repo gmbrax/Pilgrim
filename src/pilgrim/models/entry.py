@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from pilgrim.models.photo_in_entry import photo_entry_association
@@ -12,7 +12,7 @@ class Entry(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String)
     text = Column(String)
-    date = Column(String)
+    date = Column(DateTime)
     photos = relationship(
         "Photo",
         secondary=photo_entry_association,

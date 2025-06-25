@@ -375,8 +375,8 @@ class EditEntryScreen(Screen):
             service_manager = self.app.service_manager
             entry_service = service_manager.get_entry_service()
 
-            # Get current date
-            current_date = datetime.now().strftime("%d/%m/%Y")
+            # Get current date as datetime object
+            current_date = datetime.now()
 
             new_entry = entry_service.create(
                 travel_diary_id=self.diary_id,
