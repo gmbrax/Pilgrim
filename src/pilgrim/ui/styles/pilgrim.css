@@ -1,0 +1,274 @@
+Screen {
+    layout: vertical;
+    background: $surface-darken-1;
+    align: center middle;
+}
+.DiaryListScreen-DiaryListContainer {
+    height: 1fr;
+    width: 100%;
+    layout: vertical;
+    align: center top; /* Alinha no topo para seguir o wireframe */
+    padding: 2 4; /* Mais espaço nas laterais */
+    background: $surface; /* Removendo aquamarine para ficar mais limpo */
+}
+
+/* A lista de diários - área principal como no wireframe */
+.DiaryListScreen-DiaryListOptions {
+    border: round $primary-lighten-2;
+    background: $surface;
+    width: 75%; /* Largura generosa como no wireframe */
+    height: 72%; /* Ocupa o espaço disponível */
+    margin: 2 0; /* Margem vertical para separar dos outros elementos */
+}
+
+.DiaryListScreen-DiaryListOptions:focus {
+    border: round $primary;
+}
+
+/* O contêiner dos botões - logo abaixo da lista */
+.DiaryListScreen-ButtonsGrid {
+    layout: horizontal;
+    align: center middle;
+    width: 79%; /* Mesma largura da lista */
+    height: 20%; /* Aumentando altura para caber o texto dos botões */
+}
+
+/* Botões individuais - garantindo espaço para o texto */
+.DiaryListScreen-NewDiaryButton,
+.DiaryListScreen-EditDiaryButton,
+.DiaryListScreen-OpenDiaryButton {
+    margin: 0 1 1 0; /* Espaço entre os botões */
+    height: 1fr;
+    width: 1fr;
+    border: round grey;
+}
+
+/* As dicas - usando a classe correta */
+.DiaryListScreen-DiaryListTips {
+    width: 100%; /* Largura total quando usando dock */
+    height: auto;
+    text-style: italic;
+    text-align: center; /* Centraliza o texto dentro do elemento */
+    color: $text-muted;
+    dock: bottom; /* Gruda no fundo da tela */
+    margin: 0 1;
+}
+
+/* Estilos genéricos que não mudaram */
+.option-list--option-highlighted {
+    background: $primary-darken-2;
+}
+
+.option-list--option-selected {
+    text-style: bold;
+    background: $primary;
+}
+
+Header {
+    background: $primary;
+    color: $text;
+}
+
+Footer {
+    background: $primary;
+    color: $text;
+}
+
+AboutScreen {
+    align: center middle;
+}
+
+.AboutScreen_AboutContainer {
+    align: center middle;
+    width: 85%;
+    height: 95%;
+    border: thick $primary;
+    background: $surface;
+    margin: 1;
+}
+
+.AboutScreen_AboutContainer TextArea {
+    align: center middle;
+    width: 100%;
+    height: 55%;
+    margin: 2;
+    padding: 1;
+}
+
+.AboutScreen_SubContainer {
+    align: center middle;
+    height: 45%;
+    padding: 1 1;
+    margin: 1 1;
+}
+
+.AboutScreen_AboutTitle {
+    color: $accent;
+    text-style: bold;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+.AboutScreen_AboutVersion {
+    color: $warning;
+    text-style: italic;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+.AboutScreen_AboutContent {
+    text-align: center;
+    margin-bottom: 1;
+}
+
+.AboutScreen_AboutContact,
+.AboutScreen_AboutAuthor {
+    color: $text-muted;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+.AboutScreen_AboutLicense {
+    height: 60%;
+}
+
+Screen.-modal {
+    background: rgba(0, 0, 0, 0.7); /* Escurece o fundo da tela por baixo */
+    align: center middle; /* Centraliza o conteúdo (sua modal) que está nesta tela modal */
+}
+
+.NewDiaryModal-Dialog {
+    width: 60%; /* Largura do diálogo */
+    height: auto; /* Altura automática */
+    background: $surface; /* Fundo do diálogo */
+    border: thick $accent; /* Borda chamativa */
+    padding: 2 4; /* Espaçamento interno */
+    align: center middle; /* Centraliza conteúdo dentro do diálogo */
+    layout: vertical;
+}
+
+.NewDiaryModal-Dialog .NewDiaryModal-Title{
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.NewDiaryModal-NameInput{
+    width: 1fr; /* Ocupa a largura disponível */
+    margin-bottom: 2;
+}
+
+.NewDiaryModal-ButtonsContainer{
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.NewDiaryModal-ButtonsContainer Button{
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* EditEntryScreen Styles */
+.EditEntryScreen-sub-header {
+    layout: horizontal;
+    background: $primary-darken-1;
+    height: 1;
+    padding: 0 1;
+    align: center middle;
+    width: 100%;
+}
+
+.EditEntryScreen-diary-info {
+    width: auto;
+    color: $text-muted;
+    margin-right: 2;
+}
+
+.EditEntryScreen-entry-info {
+    width: auto;
+    color: $text;
+    margin-right: 1;
+}
+
+.EditEntryScreen-spacer {
+    width: 1fr;
+}
+
+.EditEntryScreen-status-indicator {
+    width: auto;
+    padding: 0 1;
+    content-align: center middle;
+}
+
+.EditEntryScreen-status-indicator.saved {
+    background: #2E8B57; /* SeaGreen */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.not-saved {
+    background: #B22222; /* FireBrick */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.new {
+    background: #4682B4; /* SteelBlue */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.read-only {
+    background: #696969; /* DimGray */
+    color: $text-muted;
+}
+
+.EditEntryScreen-main-container {
+    background: bisque;
+    margin: 0;
+}
+
+.EditEntryScreen-text-entry {
+    width: 100%;
+    height: 1fr;
+    border: none;
+}
+
+/* RenameEntryModal Styles */
+.RenameEntryModal-dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.RenameEntryModal-title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+.RenameEntryModal-label {
+    margin-bottom: 1;
+}
+
+.RenameEntryModal-name-input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.RenameEntryModal-buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.RenameEntryModal-buttons Button {
+    margin: 0 1;
+    width: 1fr;
+}

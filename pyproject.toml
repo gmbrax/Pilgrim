@@ -18,7 +18,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  "sqlalchemy"
+  "sqlalchemy",
+    "textual",
+    "textual-dev"
 ]
 [template.plugins.default]
 src-layout = true
