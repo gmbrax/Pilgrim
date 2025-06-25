@@ -151,7 +151,7 @@ AboutScreen {
 .DiaryListScreen-ButtonsGrid {
     layout: horizontal;
     align: center middle;
-    width: 79%; /* Same width as the list */
+    width: 75%; /* Same width as the diary list */
     height: 20%; /* Increasing height to fit button text */
 }
 
@@ -163,6 +163,8 @@ AboutScreen {
     height: 1fr;
     width: 1fr;
     border: round grey;
+    text-align: center;
+    content-align: center middle;
 }
 
 /* Tips - using the correct class */
