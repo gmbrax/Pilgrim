@@ -27,17 +27,17 @@ class NewDiaryModal(ModalScreen[str]):
           self.name_input.focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Lida com os cliques dos botões."""
+        """Handles button clicks."""
         if event.button.id == "create_diary_button":
             diary_name = self.name_input.value.strip()
             if diary_name:
                 self.dismiss(diary_name)
             else:
-                self.notify("O nome do diário não pode estar vazio.", severity="warning")
+                self.notify("Diary name cannot be empty.", severity="warning")
                 self.name_input.focus()
         elif event.button.id == "cancel_button":
             self.dismiss("")
 
     def action_cancel(self) -> None:
-        """Ação para cancelar a modal."""
+        """Action to cancel the modal."""
         self.dismiss("")

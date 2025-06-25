@@ -22,7 +22,7 @@ class UIApp(App):
 
 
     def on_mount(self) -> None:
-        """Chamado quando a app inicia. Carrega a tela principal."""
+        """Called when the app starts. Loads the main screen."""
         self.push_screen(DiaryListScreen())
 
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:

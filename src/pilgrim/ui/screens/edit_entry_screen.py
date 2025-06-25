@@ -14,21 +14,20 @@ from pilgrim.ui.screens.rename_entry_modal import RenameEntryModal
 
 
 class EditEntryScreen(Screen):
-    TITLE = "Pilgrim - Edit Entry"
+    TITLE = "Pilgrim - Edit"
 
     BINDINGS = [
         Binding("ctrl+s", "save", "Save"),
         Binding("ctrl+n", "next_entry", "Next/New Entry"),
         Binding("ctrl+b", "prev_entry", "Previous Entry"),
         Binding("ctrl+r", "rename_entry", "Rename Entry"),
-        Binding("escape", "back_to_list", "Back to List"),
-        Binding("r", "force_refresh", "Force refresh"),
+        Binding("escape", "back_to_list", "Back to List")
     ]
 
     def __init__(self, diary_id: int = 1):
         super().__init__()
         self.diary_id = diary_id
-        self.diary_name = "Unknown Diary"
+        self.diary_name = f"Diary {diary_id}"  # Use a better default name
         self.current_entry_index = 0
         self.entries: List[Entry] = []
         self.is_new_entry = False
@@ -81,8 +80,7 @@ class EditEntryScreen(Screen):
         """Called when the screen is mounted"""
         # First update diary info, then refresh entries
         self.update_diary_info()
-        # Use a small delay to ensure diary info is loaded before refreshing entries
-        self.set_timer(0.1, self.refresh_entries)
+        self.refresh_entries()
 
     def update_diary_info(self):
         """Updates diary information"""
@@ -94,11 +92,27 @@ class EditEntryScreen(Screen):
             if diary:
                 self.diary_name = diary.name
                 self.diary_info.update(f"Diary: {self.diary_name}")
-                self.notify(f"Loaded diary: {self.diary_name}")
             else:
-                self.notify(f"Diary with ID {self.diary_id} not found")
+                # If diary not found, try to get a default name
+                self.diary_name = f"Diary {self.diary_id}"
+                self.diary_info.update(f"Diary: {self.diary_name}")
+                self.notify(f"Diary {self.diary_id} not found, using default name")
         except Exception as e:
+            # If there's an error, use a default name but don't break the app
+            self.diary_name = f"Diary {self.diary_id}"
+            self.diary_info.update(f"Diary: {self.diary_name}")
             self.notify(f"Error loading diary info: {str(e)}")
+        
+        # Always ensure the diary info is updated
+        self._ensure_diary_info_updated()
+
+    def _ensure_diary_info_updated(self):
+        """Ensures the diary info widget is always updated with current diary name"""
+        try:
+            self.diary_info.update(f"Diary: {self.diary_name}")
+        except Exception as e:
+            # If even this fails, at least try to show something
+            self.diary_info.update(f"Diary: {self.diary_id}")
 
     def refresh_entries(self):
         """Synchronous version of refresh"""
@@ -124,6 +138,9 @@ class EditEntryScreen(Screen):
 
         except Exception as e:
             self.notify(f"Error loading entries: {str(e)}")
+        
+        # Ensure diary info is updated even if entries fail to load
+        self._ensure_diary_info_updated()
 
     async def async_refresh_entries(self):
         """Asynchronous version of refresh"""
@@ -178,7 +195,7 @@ class EditEntryScreen(Screen):
                 self._update_status_indicator("New", "new")
         else:
             current_entry = self.entries[self.current_entry_index]
-            entry_text = f"Entry: ({self.current_entry_index + 1}/{len(self.entries)}) {current_entry.title}"
+            entry_text = f"Entry: \\[{self.current_entry_index + 1}/{len(self.entries)}] {current_entry.title}"
             self.entry_info.update(entry_text)
             self._update_status_indicator("Saved", "saved")
 
@@ -198,10 +215,6 @@ class EditEntryScreen(Screen):
     def _update_entry_display(self):
         """Updates the display of the current entry"""
         if not self.entries and not self.is_new_entry:
-            # Ensure diary name is loaded
-            if self.diary_name == "Unknown Diary":
-                self.update_diary_info()
-            
             self.text_entry.text = f"No entries found for diary '{self.diary_name}'\n\nPress Ctrl+N to create a new entry."
             self.text_entry.read_only = True
             self._original_content = self.text_entry.text

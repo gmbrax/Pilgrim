@@ -12,24 +12,24 @@ class TravelDiaryServiceMock(TravelDiaryService):
         }
         self._next_id = 3
 
-    # Métodos síncronos (originais)
+    # Synchronous methods (original)
     def create(self, name: str):
-        """Versão síncrona"""
+        """Synchronous version"""
         new_travel_diary = TravelDiary(id=self._next_id, name=name)
         self.mock_data[self._next_id] = new_travel_diary
         self._next_id += 1
         return new_travel_diary
 
     def read_by_id(self, travel_id: int):
-        """Versão síncrona"""
+        """Synchronous version"""
         return self.mock_data.get(travel_id)
 
     def read_all(self):
-        """Versão síncrona"""
+        """Synchronous version"""
         return list(self.mock_data.values())
 
     def update(self, travel_diary_id: int, name: str):
-        """Versão síncrona"""
+        """Synchronous version"""
         item_to_update = self.mock_data.get(travel_diary_id)
         if item_to_update:
             item_to_update.name = name
@@ -37,31 +37,31 @@ class TravelDiaryServiceMock(TravelDiaryService):
         return None
 
     def delete(self, travel_diary_id: int):
-        """Versão síncrona"""
+        """Synchronous version"""
         return self.mock_data.pop(travel_diary_id, None)
 
-    # Métodos assíncronos (novos)
+    # Async methods (new)
     async def async_create(self, name: str):
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.create(name)
 
     async def async_read_by_id(self, travel_id: int):
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.read_by_id(travel_id)
 
     async def async_read_all(self):
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.read_all()
 
     async def async_update(self, travel_diary_id: int, name: str):
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.update(travel_diary_id, name)
 
     async def async_delete(self, travel_diary_id: int):
-        """Versão assíncrona"""
-        await asyncio.sleep(0.01)  # Simula I/O
+        """Async version"""
+        await asyncio.sleep(0.01)  # Simulates I/O
         return self.delete(travel_diary_id)
