@@ -1,4 +1,4 @@
-from src.models.travel_diary import TravelDiary
+from ..models.travel_diary import TravelDiary
 
 
 class TravelDiaryService:

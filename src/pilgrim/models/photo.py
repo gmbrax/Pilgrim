@@ -1,10 +1,10 @@
 from typing import Any
 
-from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
-from src.models.photo_in_entry import photo_entry_association
-from src.database import Base
+from pilgrim.models.photo_in_entry import photo_entry_association
+from ..database import Base
 
 
 class Photo(Base):

@@ -1,7 +1,7 @@
 from typing import List
 
-from src.models.entry import Entry
-from src.models.travel_diary import TravelDiary
+from ..models.entry import Entry
+from ..models.travel_diary import TravelDiary
 
 
 class EntryService:
