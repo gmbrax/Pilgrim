@@ -2,6 +2,7 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+
 [project]
 name = "Pilgrim"
 version = "0.0.1"
@@ -19,16 +20,12 @@ classifiers = [
 dependencies = [
   "sqlalchemy"
 ]
-
 [template.plugins.default]
 src-layout = true
-
 [project.urls]
 Homepage = "https://git.gustavomiranda.xyz/GHMiranda/Pilgrim"
 Issues = "https://git.gustavomiranda.xyz/GHMiranda/Pilgrim"
-
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
-
+packages = ["src/pilgrim"]
 [project.scripts]
 pilgrim = "pilgrim:main"
