@@ -127,8 +127,8 @@ class DiaryListScreen(Screen):
             service_manager = self.app.service_manager
             travel_diary_service = service_manager.get_travel_diary_service()
 
-            # Uses async method
-            diaries = await travel_diary_service.async_read_all()
+            # Usa método síncrono agora
+            diaries = travel_diary_service.read_all()
 
             # Saves current state
             current_diary_id = None

@@ -7,7 +7,10 @@ from pilgrim.ui.ui import UIApp
 class Application:
     def __init__(self):
         self.database = Database()
-        self.ui = UIApp(ServiceManagerMock())
+        session = self.database.session()
+        session_manager = ServiceManager()
+        session_manager.set_session(session)
+        self.ui = UIApp(session_manager)
 
     def run(self):
         self.database.create()
