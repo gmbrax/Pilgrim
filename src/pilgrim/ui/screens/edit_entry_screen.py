@@ -1,15 +1,19 @@
 from typing import Optional, List
 import asyncio
 from datetime import datetime
+from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, TextArea
+from textual.widgets import Header, Footer, Static, TextArea, OptionList, Input, Button
 from textual.binding import Binding
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 
 from pilgrim.models.entry import Entry
 from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.models.photo import Photo
+from pilgrim.ui.screens.modals.add_photo_modal import AddPhotoModal
+from pilgrim.ui.screens.modals.file_picker_modal import FilePickerModal
 from pilgrim.ui.screens.rename_entry_modal import RenameEntryModal
 
 
@@ -21,13 +25,16 @@ class EditEntryScreen(Screen):
         Binding("ctrl+n", "next_entry", "Next/New Entry"),
         Binding("ctrl+b", "prev_entry", "Previous Entry"),
         Binding("ctrl+r", "rename_entry", "Rename Entry"),
-        Binding("escape", "back_to_list", "Back to List")
+        Binding("escape", "back_to_list", "Back to List"),
+        Binding("f8", "toggle_sidebar", "Toggle Sidebar"),
+        Binding("f9", "toggle_focus", "Focus Sidebar/Editor"),
     ]
 
     def __init__(self, diary_id: int = 1):
+        print("DEBUG: EditEntryScreen INIT")
         super().__init__()
         self.diary_id = diary_id
-        self.diary_name = f"Diary {diary_id}"  # Use a better default name
+        self.diary_name = f"Diary {diary_id}"
         self.current_entry_index = 0
         self.entries: List[Entry] = []
         self.is_new_entry = False
@@ -38,6 +45,9 @@ class EditEntryScreen(Screen):
         self._updating_display = False
         self._original_content = ""
         self.is_refreshing = False
+        self.sidebar_visible = False
+        self.sidebar_focused = False
+        self._sidebar_opened_once = False
 
         # Main header
         self.header = Header(name="Pilgrim v6", classes="EditEntryScreen-header")
@@ -60,6 +70,27 @@ class EditEntryScreen(Screen):
         # Text area
         self.text_entry = TextArea(id="text_entry", classes="EditEntryScreen-text-entry")
 
+        # Sidebar widgets
+        self.sidebar_title = Static("📸 Photos", classes="EditEntryScreen-sidebar-title")
+        self.photo_list = OptionList(id="photo_list", classes="EditEntryScreen-sidebar-photo-list")
+        self.photo_info = Static("", classes="EditEntryScreen-sidebar-photo-info")
+        self.help_text = Static("", classes="EditEntryScreen-sidebar-help")
+
+        # Sidebar container: photo list and info in a flexible container, help_text fixed at bottom
+        self.sidebar_content = Vertical(
+            self.photo_list,
+            self.photo_info,
+            id="sidebar_content",
+            classes="EditEntryScreen-sidebar-content"
+        )
+        self.sidebar = Vertical(
+            self.sidebar_title,
+            self.sidebar_content,
+            self.help_text,  # Always at the bottom, never scrolls
+            id="sidebar",
+            classes="EditEntryScreen-sidebar"
+        )
+
         # Main container
         self.main = Container(
             self.sub_header,
@@ -71,16 +102,32 @@ class EditEntryScreen(Screen):
         # Footer
         self.footer = Footer(classes="EditEntryScreen-footer")
 
+    def _update_footer_context(self):
+        """Forces footer refresh to show updated bindings"""
+        self.refresh()
+
     def compose(self) -> ComposeResult:
+        print("DEBUG: EditEntryScreen COMPOSE", getattr(self, 'sidebar_visible', None))
         yield self.header
-        yield self.main
+        yield Horizontal(
+            self.main,
+            self.sidebar,
+            id="content_container",
+            classes="EditEntryScreen-content-container"
+        )
         yield self.footer
 
     def on_mount(self) -> None:
         """Called when the screen is mounted"""
+        self.sidebar.display = False
+        self.sidebar_visible = False
+        
         # First update diary info, then refresh entries
         self.update_diary_info()
         self.refresh_entries()
+        
+        # Initialize footer with editor context
+        self._update_footer_context()
 
     def update_diary_info(self):
         """Updates diary information"""
@@ -93,17 +140,14 @@ class EditEntryScreen(Screen):
                 self.diary_name = diary.name
                 self.diary_info.update(f"Diary: {self.diary_name}")
             else:
-                # If diary not found, try to get a default name
                 self.diary_name = f"Diary {self.diary_id}"
                 self.diary_info.update(f"Diary: {self.diary_name}")
                 self.notify(f"Diary {self.diary_id} not found, using default name")
         except Exception as e:
-            # If there's an error, use a default name but don't break the app
             self.diary_name = f"Diary {self.diary_id}"
             self.diary_info.update(f"Diary: {self.diary_name}")
             self.notify(f"Error loading diary info: {str(e)}")
         
-        # Always ensure the diary info is updated
         self._ensure_diary_info_updated()
 
     def _ensure_diary_info_updated(self):
@@ -111,7 +155,6 @@ class EditEntryScreen(Screen):
         try:
             self.diary_info.update(f"Diary: {self.diary_name}")
         except Exception as e:
-            # If even this fails, at least try to show something
             self.diary_info.update(f"Diary: {self.diary_id}")
 
     def refresh_entries(self):
@@ -120,14 +163,10 @@ class EditEntryScreen(Screen):
             service_manager = self.app.service_manager
             entry_service = service_manager.get_entry_service()
 
-            # Get all entries for this diary
             all_entries = entry_service.read_all()
             self.entries = [entry for entry in all_entries if entry.fk_travel_diary_id == self.diary_id]
-            
-            # Sort by ID
             self.entries.sort(key=lambda x: x.id)
 
-            # Update next entry ID
             if self.entries:
                 self.next_entry_id = max(entry.id for entry in self.entries) + 1
             else:
@@ -139,40 +178,7 @@ class EditEntryScreen(Screen):
         except Exception as e:
             self.notify(f"Error loading entries: {str(e)}")
         
-        # Ensure diary info is updated even if entries fail to load
         self._ensure_diary_info_updated()
-
-    async def async_refresh_entries(self):
-        """Asynchronous version of refresh"""
-        if self.is_refreshing:
-            return
-
-        self.is_refreshing = True
-
-        try:
-            service_manager = self.app.service_manager
-            entry_service = service_manager.get_entry_service()
-
-            # For now, use synchronous method since mock doesn't have async
-            all_entries = entry_service.read_all()
-            self.entries = [entry for entry in all_entries if entry.fk_travel_diary_id == self.diary_id]
-            
-            # Sort by ID
-            self.entries.sort(key=lambda x: x.id)
-
-            # Update next entry ID
-            if self.entries:
-                self.next_entry_id = max(entry.id for entry in self.entries) + 1
-            else:
-                self.next_entry_id = 1
-
-            self._update_entry_display()
-            self._update_sub_header()
-
-        except Exception as e:
-            self.notify(f"Error loading entries: {str(e)}")
-        finally:
-            self.is_refreshing = False
 
     def _update_status_indicator(self, text: str, css_class: str):
         """Helper to update status indicator text and class."""
@@ -211,6 +217,8 @@ class EditEntryScreen(Screen):
         """Finishes the display update by reactivating change detection"""
         self._updating_display = False
         self._update_sub_header()
+        if self.sidebar_visible:
+            self._update_sidebar_content()
 
     def _update_entry_display(self):
         """Updates the display of the current entry"""
@@ -237,6 +245,305 @@ class EditEntryScreen(Screen):
 
         self.call_after_refresh(self._finish_display_update)
 
+    def _update_sidebar_content(self):
+        """Updates the sidebar content with photos for the current diary"""
+        photos = self._load_photos_for_diary(self.diary_id)
+
+        # Clear existing options safely
+        self.photo_list.clear_options()
+
+        # Add 'Ingest Photo' option at the top
+        self.photo_list.add_option("➕ Ingest Photo")
+
+        if not photos:
+            self.photo_info.update("No photos found for this diary")
+            self.help_text.update("📸 No photos available\n\nUse Photo Manager to add photos")
+            return
+
+        # Add photos to the list
+        for photo in photos:
+            self.photo_list.add_option(f"📷 {photo.name}")
+
+        self.photo_info.update(f"📸 {len(photos)} photos in diary")
+        
+        # English, visually distinct help text
+        help_text = (
+            "[b]⌨️  Sidebar Shortcuts[/b]\n"
+            "[b][green]i[/green][/b]: Insert photo into entry\n"
+            "[b][green]n[/green][/b]: Add new photo\n"
+            "[b][green]d[/green][/b]: Delete selected photo\n"
+            "[b][green]e[/green][/b]: Edit selected photo\n"
+            "[b][yellow]Tab[/yellow][/b]: Back to editor\n"
+            "[b][yellow]F8[/yellow][/b]: Show/hide sidebar\n"
+            "[b][yellow]F9[/yellow][/b]: Focus Sidebar/Editor"
+        )
+        self.help_text.update(help_text)
+
+    def _load_photos_for_diary(self, diary_id: int) -> List[Photo]:
+        """Loads all photos for the specific diary"""
+        try:
+            service_manager = self.app.service_manager
+            photo_service = service_manager.get_photo_service()
+            
+            all_photos = photo_service.read_all()
+            photos = [photo for photo in all_photos if photo.fk_travel_diary_id == diary_id]
+            photos.sort(key=lambda x: x.id)
+            return photos
+        except Exception as e:
+            self.notify(f"Error loading photos: {str(e)}")
+            return []
+
+    def action_toggle_sidebar(self):
+        """Toggles the sidebar visibility"""
+        print("DEBUG: TOGGLE SIDEBAR", self.sidebar_visible)
+        self.sidebar_visible = not self.sidebar_visible
+        
+        if self.sidebar_visible:
+            self.sidebar.display = True
+            self._update_sidebar_content()
+            # Notification when opening the sidebar for the first time
+            if not self._sidebar_opened_once:
+                self.notify(
+                    "Sidebar opened! Context-specific shortcuts are always visible in the sidebar help panel.",
+                    severity="info"
+                )
+                self._sidebar_opened_once = True
+        else:
+            self.sidebar.display = False
+            self.sidebar_focused = False  # Reset focus when hiding
+            self.text_entry.focus()  # Return focus to editor
+        
+        # Update footer after context change
+        self._update_footer_context()
+        self.refresh(layout=True)
+
+    def action_toggle_focus(self):
+        """Toggles focus between editor and sidebar"""
+        print("DEBUG: TOGGLE FOCUS", self.sidebar_visible, self.sidebar_focused)
+        if not self.sidebar_visible:
+            # If sidebar is not visible, show it and focus it
+            self.action_toggle_sidebar()
+            return
+        
+        self.sidebar_focused = not self.sidebar_focused
+        if self.sidebar_focused:
+            self.photo_list.focus()
+        else:
+            self.text_entry.focus()
+        
+        # Update footer after focus change
+        self._update_footer_context()
+
+    def action_insert_photo(self):
+        """Insert selected photo into text"""
+        if not self.sidebar_focused or not self.sidebar_visible:
+            self.notify("Use F9 to focus the sidebar before using this shortcut.", severity="warning")
+            return
+            
+        # Get selected photo
+        if self.photo_list.highlighted is None:
+            self.notify("No photo selected", severity="warning")
+            return
+            
+        photos = self._load_photos_for_diary(self.diary_id)
+        if self.photo_list.highlighted >= len(photos):
+            return
+            
+        selected_photo = photos[self.photo_list.highlighted]
+        
+        # Insert photo reference into text
+        photo_ref = f"\n[📷 {selected_photo.name}]({selected_photo.filepath})\n"
+        if selected_photo.caption:
+            photo_ref += f"*{selected_photo.caption}*\n"
+        
+        # Insert at cursor position or at end
+        current_text = self.text_entry.text
+        cursor_position = len(current_text)  # Insert at end for now
+        new_text = current_text + photo_ref
+        self.text_entry.text = new_text
+        
+        self.notify(f"Inserted photo: {selected_photo.name}")
+
+    def action_ingest_new_photo(self):
+        """Ingest a new photo using modal"""
+        if not self.sidebar_focused or not self.sidebar_visible:
+            self.notify("Use F9 to focus the sidebar before using this shortcut.", severity="warning")
+            return
+        
+        # Open add photo modal
+        self.app.push_screen(
+            AddPhotoModal(diary_id=self.diary_id),
+            self.handle_add_photo_result
+        )
+
+    def handle_add_photo_result(self, result: dict | None) -> None:
+        """Callback that processes the add photo modal result."""
+        if result is None:
+            self.notify("Add photo cancelled")
+            return
+
+        # Schedule async creation
+        self.call_later(self._async_create_photo, result)
+
+    async def _async_create_photo(self, photo_data: dict):
+        """Creates a new photo asynchronously"""
+        try:
+            service_manager = self.app.service_manager
+            photo_service = service_manager.get_photo_service()
+
+            current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            new_photo = photo_service.create(
+                filepath=Path(photo_data["filepath"]),
+                name=photo_data["name"],
+                travel_diary_id=self.diary_id,
+                addition_date=current_date,
+                caption=photo_data["caption"]
+            )
+
+            if new_photo:
+                self.notify(f"Photo '{new_photo.name}' added successfully!")
+                # Refresh sidebar content
+                if self.sidebar_visible:
+                    self._update_sidebar_content()
+            else:
+                self.notify("Error creating photo")
+
+        except Exception as e:
+            self.notify(f"Error creating photo: {str(e)}")
+
+    def action_delete_photo(self):
+        """Delete selected photo"""
+        if not self.sidebar_focused or not self.sidebar_visible:
+            self.notify("Use F9 to focus the sidebar before using this shortcut.", severity="warning")
+            return
+            
+        if self.photo_list.highlighted is None:
+            self.notify("No photo selected", severity="warning")
+            return
+            
+        photos = self._load_photos_for_diary(self.diary_id)
+        if self.photo_list.highlighted >= len(photos):
+            return
+            
+        selected_photo = photos[self.photo_list.highlighted]
+        
+        # Confirm deletion
+        self.notify(f"Deleting photo: {selected_photo.name}")
+        
+        # Schedule async deletion
+        self.call_later(self._async_delete_photo, selected_photo)
+
+    async def _async_delete_photo(self, photo: Photo):
+        """Deletes a photo asynchronously"""
+        try:
+            service_manager = self.app.service_manager
+            photo_service = service_manager.get_photo_service()
+
+            result = photo_service.delete(photo)
+
+            if result:
+                self.notify(f"Photo '{photo.name}' deleted successfully!")
+                # Refresh sidebar content
+                if self.sidebar_visible:
+                    self._update_sidebar_content()
+            else:
+                self.notify("Error deleting photo")
+
+        except Exception as e:
+            self.notify(f"Error deleting photo: {str(e)}")
+
+    def action_edit_photo(self):
+        """Edit selected photo using modal"""
+        if not self.sidebar_focused or not self.sidebar_visible:
+            self.notify("Use F9 to focus the sidebar before using this shortcut.", severity="warning")
+            return
+            
+        if self.photo_list.highlighted is None:
+            self.notify("No photo selected", severity="warning")
+            return
+            
+        photos = self._load_photos_for_diary(self.diary_id)
+        if self.photo_list.highlighted >= len(photos):
+            return
+            
+        selected_photo = photos[self.photo_list.highlighted]
+        
+        # Open edit photo modal
+        self.app.push_screen(
+            EditPhotoModal(photo=selected_photo),
+            self.handle_edit_photo_result
+        )
+
+    def handle_edit_photo_result(self, result: dict | None) -> None:
+        """Callback that processes the edit photo modal result."""
+        if result is None:
+            self.notify("Edit photo cancelled")
+            return
+
+        # Get the selected photo
+        photos = self._load_photos_for_diary(self.diary_id)
+        if self.photo_list.highlighted is None or self.photo_list.highlighted >= len(photos):
+            self.notify("Photo no longer available", severity="error")
+            return
+            
+        selected_photo = photos[self.photo_list.highlighted]
+        
+        # Schedule async update
+        self.call_later(self._async_update_photo, selected_photo, result)
+
+    async def _async_update_photo(self, original_photo: Photo, photo_data: dict):
+        """Updates a photo asynchronously"""
+        try:
+            service_manager = self.app.service_manager
+            photo_service = service_manager.get_photo_service()
+
+            # Create updated photo object
+            updated_photo = Photo(
+                filepath=photo_data["filepath"],
+                name=photo_data["name"],
+                addition_date=original_photo.addition_date,
+                caption=photo_data["caption"],
+                entries=original_photo.entries,
+                id=original_photo.id
+            )
+
+            result = photo_service.update(original_photo, updated_photo)
+
+            if result:
+                self.notify(f"Photo '{updated_photo.name}' updated successfully!")
+                # Refresh sidebar content
+                if self.sidebar_visible:
+                    self._update_sidebar_content()
+            else:
+                self.notify("Error updating photo")
+
+        except Exception as e:
+            self.notify(f"Error updating photo: {str(e)}")
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        """Handles photo selection in the sidebar"""
+        if not self.sidebar_visible:
+            return
+        # If 'Ingest Photo' is selected (always index 0)
+        if event.option_index == 0:
+            self.action_ingest_new_photo()
+            return
+        photos = self._load_photos_for_diary(self.diary_id)
+        # Adjust index because of 'Ingest Photo' at the top
+        photo_index = event.option_index - 1
+        if not photos or photo_index >= len(photos):
+            return
+        selected_photo = photos[photo_index]
+        self.notify(f"Selected photo: {selected_photo.name}")
+        # Update photo info with details
+        photo_details = f"📷 {selected_photo.name}\n"
+        photo_details += f"📅 {selected_photo.addition_date}\n"
+        if selected_photo.caption:
+            photo_details += f"💬 {selected_photo.caption}\n"
+        photo_details += f"📁 {selected_photo.filepath}"
+        self.photo_info.update(photo_details)
+
     def on_text_area_changed(self, event) -> None:
         """Detects text changes to mark as unsaved"""
         if (hasattr(self, 'text_entry') and not self.text_entry.read_only and
@@ -250,6 +557,17 @@ class EditEntryScreen(Screen):
                 if self.has_unsaved_changes:
                     self.has_unsaved_changes = False
                     self._update_sub_header()
+
+    def on_focus(self, event) -> None:
+        """Captures focus changes to update footer"""
+        # Check if focus changed to/from sidebar
+        if hasattr(event.widget, 'id'):
+            if event.widget.id == "photo_list":
+                self.sidebar_focused = True
+                self._update_footer_context()
+            elif event.widget.id == "text_entry":
+                self.sidebar_focused = False
+                self._update_footer_context()
 
     def action_back_to_list(self) -> None:
         """Goes back to the diary list"""
@@ -375,7 +693,6 @@ class EditEntryScreen(Screen):
             service_manager = self.app.service_manager
             entry_service = service_manager.get_entry_service()
 
-            # Get current date as datetime object
             current_date = datetime.now()
 
             new_entry = entry_service.create(
@@ -389,7 +706,6 @@ class EditEntryScreen(Screen):
                 self.entries.append(new_entry)
                 self.entries.sort(key=lambda x: x.id)
 
-                # Find the new entry index
                 for i, entry in enumerate(self.entries):
                     if entry.id == new_entry.id:
                         self.current_entry_index = i
@@ -419,7 +735,6 @@ class EditEntryScreen(Screen):
             current_entry = self.entries[self.current_entry_index]
             updated_content = self.text_entry.text
 
-            # Create updated entry object
             updated_entry = Entry(
                 title=current_entry.title,
                 text=updated_content,
@@ -445,8 +760,44 @@ class EditEntryScreen(Screen):
         except Exception as e:
             self.notify(f"Error updating entry: {str(e)}")
 
-    def action_force_refresh(self):
-        """Forces manual refresh"""
-        self.notify("Forcing refresh...")
-        self.refresh_entries()
-        self.call_later(self.async_refresh_entries) 
+    def on_key(self, event):
+        # Sidebar contextual shortcuts
+        if self.sidebar_focused and self.sidebar_visible:
+            if event.key == "i":
+                self.action_insert_photo()
+                event.stop()
+            elif event.key == "n":
+                self.action_ingest_new_photo()
+                event.stop()
+            elif event.key == "d":
+                self.action_delete_photo()
+                event.stop()
+            elif event.key == "e":
+                self.action_edit_photo()
+                event.stop()
+        # Shift+Tab: remove indent
+        elif self.focused is self.text_entry and event.key == "shift+tab":
+            textarea = self.text_entry
+            row, col = textarea.cursor_location
+            lines = textarea.text.splitlines()
+            if row < len(lines):
+                line = lines[row]
+                if line.startswith('\t'):
+                    lines[row] = line[1:]
+                    textarea.text = '\n'.join(lines)
+                    textarea.cursor_location = (row, max(col - 1, 0))
+                elif line.startswith('    '):  # 4 spaces
+                    lines[row] = line[4:]
+                    textarea.text = '\n'.join(lines)
+                    textarea.cursor_location = (row, max(col - 4, 0))
+                elif line.startswith(' '):
+                    n = len(line) - len(line.lstrip(' '))
+                    to_remove = min(n, 4)
+                    lines[row] = line[to_remove:]
+                    textarea.text = '\n'.join(lines)
+                    textarea.cursor_location = (row, max(col - to_remove, 0))
+            event.stop()
+        # Tab: insert tab
+        elif self.focused is self.text_entry and event.key == "tab":
+            self.text_entry.insert('\t')
+            event.stop() 
