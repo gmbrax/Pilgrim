@@ -388,3 +388,204 @@ Screen.-modal {
     margin: 0 1;
     width: 1fr;
 }
+
+.EditEntryScreen-sidebar {
+    width: 40;
+    min-height: 10;
+    border-left: solid green;
+    padding: 1;
+    background: $surface-darken-2;
+    color: $primary;
+    text-style: bold;
+    content-align: left top;
+}
+
+.EditEntryScreen-content-container {
+    layout: horizontal;
+    height: 1fr;
+}
+
+.EditEntryScreen-sidebar-title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    padding: 1;
+    border-bottom: solid $accent;
+    margin-bottom: 1;
+}
+
+.EditEntryScreen-sidebar-content {
+    height: 1fr;
+    layout: vertical;
+}
+
+.EditEntryScreen-sidebar-photo-list {
+    height: 1fr;
+    border: solid $accent;
+    margin-bottom: 1;
+}
+
+.EditEntryScreen-sidebar-photo-info {
+    height: auto;
+    min-height: 3;
+    border: solid $warning;
+    padding: 1;
+    margin-bottom: 1;
+    background: $surface-darken-1;
+}
+
+.EditEntryScreen-sidebar-help {
+    height: auto;
+    min-height: 8;
+    border: solid $success;
+    padding: 1;
+    background: $surface-darken-1;
+    text-style: italic;
+}
+
+/* Photo Modal Styles */
+.modal-dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.modal-title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.modal-label {
+    margin-bottom: 1;
+    color: $text;
+}
+
+.modal-input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.modal-buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.modal-button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* AddPhotoModal styles */
+.AddPhotoModal-Dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+.AddPhotoModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+.AddPhotoModal-Label {
+    margin-bottom: 1;
+    color: $text;
+}
+.AddPhotoModal-Input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+.AddPhotoModal-Buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+.AddPhotoModal-Button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* EditPhotoModal styles */
+.EditPhotoModal-Dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+.EditPhotoModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+.EditPhotoModal-Label {
+    margin-bottom: 1;
+    color: $text;
+}
+.EditPhotoModal-Input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+.EditPhotoModal-Buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+.EditPhotoModal-Button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* FilePickerModal styles */
+.FilePickerModal-Dialog {
+    layout: vertical;
+    width: 80%;
+    height: 80%;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.FilePickerModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.FilePickerModal-Buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.FilePickerModal-Button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* DirectoryTree specific styles */
+#directory-tree {
+    height: 1fr;
+    border: solid $accent;
+    margin: 1;
+}

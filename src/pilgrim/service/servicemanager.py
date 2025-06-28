@@ -1,4 +1,5 @@
 from pilgrim.service.entry_service import EntryService
+from pilgrim.service.photo_service import PhotoService
 from pilgrim.service.travel_diary_service import TravelDiaryService
 
 
@@ -16,4 +17,8 @@ class ServiceManager:
     def get_travel_diary_service(self):
         if self.session is not None:
             return TravelDiaryService(self.session)
+        return None
+    def get_photo_service(self):
+        if self.session is not None:
+            return PhotoService(self.session)
         return None
