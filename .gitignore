@@ -1,6 +1,8 @@
 # Database files
 database.db
 
+.build-vend/
+dist_nuitka/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

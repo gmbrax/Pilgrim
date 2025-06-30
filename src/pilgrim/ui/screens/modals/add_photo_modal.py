@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Static, Input, Button
@@ -47,15 +48,58 @@ class AddPhotoModal(Screen):
             if not filepath.strip() or not name.strip():
                 self.notify("File path and name are required", severity="error")
                 return
-            self.result = {
+            
+            # Try to create the photo in the database
+            self.call_later(self._async_create_photo, {
                 "filepath": filepath.strip(),
                 "name": name.strip(),
                 "caption": caption.strip() if caption.strip() else None
-            }
-            self.dismiss()
+            })
         elif event.button.id == "cancel-button":
             self.dismiss()
 
+    async def _async_create_photo(self, photo_data: dict):
+        """Creates a new photo asynchronously using PhotoService"""
+        try:
+            service_manager = self.app.service_manager
+            photo_service = service_manager.get_photo_service()
+
+            new_photo = photo_service.create(
+                filepath=Path(photo_data["filepath"]),
+                name=photo_data["name"],
+                travel_diary_id=self.diary_id,
+                caption=photo_data["caption"]
+            )
+
+            if new_photo:
+                self.notify(f"Photo '{new_photo.name}' added successfully!")
+                # Return the created photo data to the calling screen
+                self.result = {
+                    "filepath": photo_data["filepath"],
+                    "name": photo_data["name"],
+                    "caption": photo_data["caption"],
+                    "photo_id": new_photo.id
+                }
+                self.dismiss(self.result)
+            else:
+                self.notify("Error creating photo in database", severity="error")
+
+        except Exception as e:
+            self.notify(f"Error creating photo: {str(e)}", severity="error")
+
     def handle_file_picker_result(self, result: str | None) -> None:
         if result:
-            self.query_one("#filepath-input", Input).value = result 
+            # Set the filepath input value
+            filepath_input = self.query_one("#filepath-input", Input)
+            filepath_input.value = result
+            # Trigger the input change event to update the UI
+            filepath_input.refresh()
+            # Auto-fill the name field with the filename (without extension)
+            filename = Path(result).stem
+            name_input = self.query_one("#name-input", Input)
+            if not name_input.value.strip():
+                name_input.value = filename
+                name_input.refresh()
+        else:
+            # User cancelled the file picker
+            self.notify("File selection cancelled", severity="information") 
