@@ -12,10 +12,13 @@ class Database:
             echo=False,
             connect_args={"check_same_thread": False},
         )
-        self.session = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)
+        self._session_maker = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)
 
     def create(self):
         Base.metadata.create_all(self.engine)
 
+    def session(self):
+        return self._session_maker()
+
     def get_db(self):
-        return self.session()
+        return self._session_maker()

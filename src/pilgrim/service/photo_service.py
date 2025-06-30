@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List
+from datetime import datetime
 
 
 from pilgrim.models.photo import Photo
@@ -9,11 +10,25 @@ class PhotoService:
     def __init__(self, session):
         self.session = session
 
-    def create(self, filepath:Path, name:str, travel_diary_id, addition_date=None, caption=None, ) -> Photo | None:
+    def create(self, filepath: Path, name: str, travel_diary_id: int, caption=None, addition_date=None) -> Photo | None:
         travel_diary = self.session.query(TravelDiary).filter(TravelDiary.id == travel_diary_id).first()
         if not travel_diary:
             return None
-        new_photo = Photo(filepath, name, addition_date=addition_date, caption=caption)
+        
+        # Convert addition_date string to datetime if needed
+        if isinstance(addition_date, str):
+            try:
+                addition_date = datetime.strptime(addition_date, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                addition_date = None
+        
+        new_photo = Photo(
+            filepath=filepath, 
+            name=name, 
+            caption=caption, 
+            fk_travel_diary_id=travel_diary_id,
+            addition_date=addition_date
+        )
         self.session.add(new_photo)
         self.session.commit()
         self.session.refresh(new_photo)
@@ -25,24 +40,37 @@ class PhotoService:
     def read_all(self) -> List[Photo]:
         return self.session.query(Photo).all()
 
-    def update(self,photo_src:Photo,photo_dst:Photo) -> Photo | None:
-        original:Photo = self.read_by_id(photo_src.id)
+    def update(self, photo_src: Photo, photo_dst: Photo) -> Photo | None:
+        original: Photo = self.read_by_id(photo_src.id)
         if original:
             original.filepath = photo_dst.filepath
             original.name = photo_dst.name
             original.addition_date = photo_dst.addition_date
             original.caption = photo_dst.caption
-            original.entries.extend(photo_dst.entries)
+            if photo_dst.entries and len(photo_dst.entries) > 0:
+                if original.entries is None:
+                    original.entries = []
+                original.entries = photo_dst.entries  # Replace instead of extend
             self.session.commit()
             self.session.refresh(original)
             return original
         return None
 
-    def delete(self, photo_src:Photo) -> Photo | None:
+    def delete(self, photo_src: Photo) -> Photo | None:
         excluded = self.read_by_id(photo_src.id)
         if excluded:
+            # Store photo data before deletion
+            deleted_photo = Photo(
+                filepath=excluded.filepath,
+                name=excluded.name,
+                addition_date=excluded.addition_date,
+                caption=excluded.caption,
+                fk_travel_diary_id=excluded.fk_travel_diary_id,
+                id=excluded.id
+            )
+            
             self.session.delete(excluded)
             self.session.commit()
-            self.session.refresh(excluded)
-            return excluded
+            
+            return deleted_photo
         return None
