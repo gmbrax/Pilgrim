@@ -589,3 +589,41 @@ Screen.-modal {
     border: solid $accent;
     margin: 1;
 }
+
+/* ConfirmDeleteModal styles */
+.ConfirmDeleteModal-Dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $error;
+    padding: 2 4;
+    align: center middle;
+}
+.ConfirmDeleteModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $error;
+    margin-bottom: 1;
+}
+.ConfirmDeleteModal-Message {
+    text-align: center;
+    color: $text;
+    margin-bottom: 1;
+}
+.ConfirmDeleteModal-Warning {
+    text-align: center;
+    color: $warning;
+    text-style: italic;
+    margin-bottom: 2;
+}
+.ConfirmDeleteModal-Buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+.ConfirmDeleteModal-Button {
+    margin: 0 1;
+    width: 1fr;
+}

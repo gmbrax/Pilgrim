@@ -1,5 +1,4 @@
 from pilgrim.database import Database
-from pilgrim.service.mocks.service_manager_mock import ServiceManagerMock
 from pilgrim.service.servicemanager import ServiceManager
 from pilgrim.ui.ui import UIApp
 

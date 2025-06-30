@@ -13,6 +13,8 @@ from pilgrim.models.entry import Entry
 from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.models.photo import Photo
 from pilgrim.ui.screens.modals.add_photo_modal import AddPhotoModal
+from pilgrim.ui.screens.modals.edit_photo_modal import EditPhotoModal
+from pilgrim.ui.screens.modals.confirm_delete_modal import ConfirmDeleteModal
 from pilgrim.ui.screens.modals.file_picker_modal import FilePickerModal
 from pilgrim.ui.screens.rename_entry_modal import RenameEntryModal
 
@@ -275,7 +277,7 @@ class EditEntryScreen(Screen):
             "[b][green]e[/green][/b]: Edit selected photo\n"
             "[b][yellow]Tab[/yellow][/b]: Back to editor\n"
             "[b][yellow]F8[/yellow][/b]: Show/hide sidebar\n"
-            "[b][yellow]F9[/yellow][/b]: Focus Sidebar/Editor"
+            "[b][yellow]F9[/yellow][/b]: Switch focus (if needed)"
         )
         self.help_text.update(help_text)
 
@@ -301,10 +303,13 @@ class EditEntryScreen(Screen):
         if self.sidebar_visible:
             self.sidebar.display = True
             self._update_sidebar_content()
+            # Automatically focus the sidebar when opening
+            self.sidebar_focused = True
+            self.photo_list.focus()
             # Notification when opening the sidebar for the first time
             if not self._sidebar_opened_once:
                 self.notify(
-                    "Sidebar opened! Context-specific shortcuts are always visible in the sidebar help panel.",
+                    "Sidebar opened and focused! Use the shortcuts shown in the help panel.",
                     severity="info"
                 )
                 self._sidebar_opened_once = True
@@ -337,7 +342,7 @@ class EditEntryScreen(Screen):
     def action_insert_photo(self):
         """Insert selected photo into text"""
         if not self.sidebar_focused or not self.sidebar_visible:
-            self.notify("Use F9 to focus the sidebar before using this shortcut.", severity="warning")
+            self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
             
         # Get selected photo
@@ -345,11 +350,15 @@ class EditEntryScreen(Screen):
             self.notify("No photo selected", severity="warning")
             return
             
+        # Adjust index because of 'Ingest Photo' at the top
+        photo_index = self.photo_list.highlighted - 1
+            
         photos = self._load_photos_for_diary(self.diary_id)
-        if self.photo_list.highlighted >= len(photos):
+        if photo_index < 0 or photo_index >= len(photos):
+            self.notify("No photo selected", severity="warning")
             return
             
-        selected_photo = photos[self.photo_list.highlighted]
+        selected_photo = photos[photo_index]
         
         # Insert photo reference into text
         photo_ref = f"\n[📷 {selected_photo.name}]({selected_photo.filepath})\n"
@@ -367,7 +376,7 @@ class EditEntryScreen(Screen):
     def action_ingest_new_photo(self):
         """Ingest a new photo using modal"""
         if not self.sidebar_focused or not self.sidebar_visible:
-            self.notify("Use F9 to focus the sidebar before using this shortcut.", severity="warning")
+            self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
         
         # Open add photo modal
@@ -382,8 +391,10 @@ class EditEntryScreen(Screen):
             self.notify("Add photo cancelled")
             return
 
-        # Schedule async creation
-        self.call_later(self._async_create_photo, result)
+        # Photo was already created in the modal, just refresh the sidebar
+        if self.sidebar_visible:
+            self._update_sidebar_content()
+        self.notify(f"Photo '{result['name']}' added successfully!")
 
     async def _async_create_photo(self, photo_data: dict):
         """Creates a new photo asynchronously"""
@@ -415,24 +426,46 @@ class EditEntryScreen(Screen):
     def action_delete_photo(self):
         """Delete selected photo"""
         if not self.sidebar_focused or not self.sidebar_visible:
-            self.notify("Use F9 to focus the sidebar before using this shortcut.", severity="warning")
+            self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
             
         if self.photo_list.highlighted is None:
             self.notify("No photo selected", severity="warning")
             return
             
+        # Adjust index because of 'Ingest Photo' at the top
+        photo_index = self.photo_list.highlighted - 1
+            
         photos = self._load_photos_for_diary(self.diary_id)
-        if self.photo_list.highlighted >= len(photos):
+        if photo_index < 0 or photo_index >= len(photos):
+            self.notify("No photo selected", severity="warning")
             return
             
-        selected_photo = photos[self.photo_list.highlighted]
+        selected_photo = photos[photo_index]
         
-        # Confirm deletion
-        self.notify(f"Deleting photo: {selected_photo.name}")
-        
-        # Schedule async deletion
-        self.call_later(self._async_delete_photo, selected_photo)
+        # Open confirm delete modal
+        self.app.push_screen(
+            ConfirmDeleteModal(photo=selected_photo),
+            self.handle_delete_photo_result
+        )
+
+    def handle_delete_photo_result(self, result: bool) -> None:
+        """Callback that processes the delete photo modal result."""
+        if result:
+            # Get the selected photo with adjusted index
+            photos = self._load_photos_for_diary(self.diary_id)
+            photo_index = self.photo_list.highlighted - 1  # Adjust for 'Ingest Photo' at top
+            
+            if self.photo_list.highlighted is None or photo_index < 0 or photo_index >= len(photos):
+                self.notify("Photo no longer available", severity="error")
+                return
+                
+            selected_photo = photos[photo_index]
+            
+            # Schedule async deletion
+            self.call_later(self._async_delete_photo, selected_photo)
+        else:
+            self.notify("Delete cancelled")
 
     async def _async_delete_photo(self, photo: Photo):
         """Deletes a photo asynchronously"""
@@ -456,18 +489,22 @@ class EditEntryScreen(Screen):
     def action_edit_photo(self):
         """Edit selected photo using modal"""
         if not self.sidebar_focused or not self.sidebar_visible:
-            self.notify("Use F9 to focus the sidebar before using this shortcut.", severity="warning")
+            self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
             
         if self.photo_list.highlighted is None:
             self.notify("No photo selected", severity="warning")
             return
             
+        # Adjust index because of 'Ingest Photo' at the top
+        photo_index = self.photo_list.highlighted - 1
+        
         photos = self._load_photos_for_diary(self.diary_id)
-        if self.photo_list.highlighted >= len(photos):
+        if photo_index < 0 or photo_index >= len(photos):
+            self.notify("No photo selected", severity="warning")
             return
             
-        selected_photo = photos[self.photo_list.highlighted]
+        selected_photo = photos[photo_index]
         
         # Open edit photo modal
         self.app.push_screen(
@@ -481,13 +518,15 @@ class EditEntryScreen(Screen):
             self.notify("Edit photo cancelled")
             return
 
-        # Get the selected photo
+        # Get the selected photo with adjusted index
         photos = self._load_photos_for_diary(self.diary_id)
-        if self.photo_list.highlighted is None or self.photo_list.highlighted >= len(photos):
+        photo_index = self.photo_list.highlighted - 1  # Adjust for 'Ingest Photo' at top
+        
+        if self.photo_list.highlighted is None or photo_index < 0 or photo_index >= len(photos):
             self.notify("Photo no longer available", severity="error")
             return
             
-        selected_photo = photos[self.photo_list.highlighted]
+        selected_photo = photos[photo_index]
         
         # Schedule async update
         self.call_later(self._async_update_photo, selected_photo, result)
@@ -504,7 +543,7 @@ class EditEntryScreen(Screen):
                 name=photo_data["name"],
                 addition_date=original_photo.addition_date,
                 caption=photo_data["caption"],
-                entries=original_photo.entries,
+                entries=original_photo.entries if original_photo.entries is not None else [],
                 id=original_photo.id
             )
 

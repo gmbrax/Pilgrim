@@ -25,7 +25,6 @@ class FilePickerModal(Screen):
         self.start_path = Path(start_path or os.getcwd())
         # Start one level up to make navigation easier
         self.current_path = self.start_path.parent
-        self.result = None
 
     def compose(self) -> ComposeResult:
         yield Container(
@@ -45,8 +44,8 @@ class FilePickerModal(Screen):
         # Check if it's an image file
         image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
         if file_path.suffix.lower() in image_extensions:
-            self.result = str(file_path)
-            self.dismiss()
+            # Return the file path as result
+            self.dismiss(str(file_path))
         else:
             self.notify("Please select an image file", severity="warning")
 
@@ -63,4 +62,5 @@ class FilePickerModal(Screen):
                 tree.path = str(self.current_path)
                 tree.reload()
         elif event.button.id == "cancel-button":
-            self.dismiss() 
+            # Return None to indicate cancellation
+            self.dismiss(None) 
