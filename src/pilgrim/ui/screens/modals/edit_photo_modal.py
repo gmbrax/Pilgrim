@@ -3,6 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Static, Input, Button
 from textual.containers import Container, Horizontal
 from pilgrim.models.photo import Photo
+import hashlib
 
 class EditPhotoModal(Screen):
     """Modal for editing an existing photo (name and caption only)"""
@@ -11,7 +12,16 @@ class EditPhotoModal(Screen):
         self.photo = photo
         self.result = None
 
+    def _generate_photo_hash(self, photo: Photo) -> str:
+        """Generate a short, unique hash for a photo"""
+        unique_string = f"{photo.name}_{photo.id}_{photo.addition_date}"
+        hash_object = hashlib.md5(unique_string.encode())
+        return hash_object.hexdigest()[:8]
+
     def compose(self) -> ComposeResult:
+        # Generate hash for this photo
+        photo_hash = self._generate_photo_hash(self.photo)
+        
         yield Container(
             Static("✏️ Edit Photo", classes="EditPhotoModal-Title"),
             Static("File path (read-only):", classes="EditPhotoModal-Label"),
@@ -35,6 +45,10 @@ class EditPhotoModal(Screen):
                 id="caption-input", 
                 classes="EditPhotoModal-Input"
             ),
+            Static(f"🔗 Photo Hash: {photo_hash}", classes="EditPhotoModal-Hash"),
+            Static("Reference formats:", classes="EditPhotoModal-Label"),
+            Static(f"\\[\\[photo:{self.photo.name}:{photo_hash}\\]\\]", classes="EditPhotoModal-Reference"),
+            Static(f"\\[\\[photo::{photo_hash}\\]\\]", classes="EditPhotoModal-Reference"),
             Horizontal(
                 Button("Save Changes", id="save-button", classes="EditPhotoModal-Button"),
                 Button("Cancel", id="cancel-button", classes="EditPhotoModal-Button"),
