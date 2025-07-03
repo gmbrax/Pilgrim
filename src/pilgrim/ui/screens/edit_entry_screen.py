@@ -173,20 +173,8 @@ class EditEntryScreen(Screen):
                     return True
         return False
 
-    def _show_photo_tooltip(self, hash_value: str, cursor_position: tuple = None):
-        """Show tooltip with photo info when typing hash"""
-        # Temporarily disabled - using notifications instead
-        pass
 
-    def _hide_tooltip(self):
-        """Hide the current tooltip"""
-        # Temporarily disabled
-        pass
 
-    def _check_hash_tooltips(self, text: str):
-        """Check for hash patterns and show tooltips"""
-        # Temporarily disabled - using notifications instead
-        pass
 
     def _get_cursor_position(self) -> tuple:
         """Get current cursor position for tooltip placement"""
@@ -206,64 +194,6 @@ class EditEntryScreen(Screen):
             pass
         return None
 
-    def _update_photo_notification(self, message: str, severity: str = "info", timeout: int = 5):
-        """Update existing notification or create new one"""
-        # Cancel previous timer if exists
-        if self._notification_timer:
-            self._notification_timer.stop()
-            self._notification_timer = None
-        
-        # Update existing notification or create new one
-        if self._active_notification:
-            # Try to update existing notification
-            try:
-                self._active_notification.update(message)
-                print(f"DEBUG: Updated existing notification: {message}")
-            except:
-                # If update fails, create new notification
-                self._active_notification = self.notify(message, severity=severity, timeout=timeout)
-                print(f"DEBUG: Created new notification: {message}")
-        else:
-            # Create new notification
-            self._active_notification = self.notify(message, severity=severity, timeout=timeout)
-            print(f"DEBUG: Created new notification: {message}")
-        
-        # Set timer to clear notification after inactivity
-        self._notification_timer = self.set_timer(timeout, self._clear_photo_notification)
-    
-    def _show_photo_suggestion(self, message: str, timeout: int = 5):
-        # Temporarily disabled
-        pass
-    
-    def _hide_photo_suggestion(self):
-        # Temporarily disabled
-        pass
-
-    def _clear_photo_notification(self):
-        """Clear the active photo notification"""
-        self._active_notification = None
-        self._notification_timer = None
-        print("DEBUG: Cleared photo notification")
-
-    def _resolve_photo_references(self, text: str) -> str:
-        """Resolve photo references in text to actual photo information"""
-        def replace_photo_ref(match):
-            name_part = match.group(1) if match.group(1) else ""
-            hash_part = match.group(2)
-            
-            photos = self._load_photos_for_diary(self.diary_id)
-            
-            # Find photo by hash (most reliable)
-            matching_photos = [p for p in photos if self._generate_photo_hash(p) == hash_part]
-            
-            if matching_photos:
-                photo = matching_photos[0]
-                return f"\n[📷 {photo.name}]({photo.filepath})\n" + (f"*{photo.caption}*\n" if photo.caption else "")
-            else:
-                return f"\n[❌ Photo not found: hash={hash_part}]\n"
-        
-        # Match both formats: [[photo:name:hash]] and [[photo::hash]]
-        return re.sub(r'\[\[photo:([^:]*):([a-f0-9]{8})\]\]', replace_photo_ref, text)
 
     def compose(self) -> ComposeResult:
         print("DEBUG: EditEntryScreen COMPOSE", getattr(self, 'sidebar_visible', None))
@@ -792,8 +722,7 @@ class EditEntryScreen(Screen):
                 not getattr(self, '_updating_display', False) and hasattr(self, '_original_content')):
             current_content = self.text_entry.text
             
-            # Check for hash patterns and show tooltips
-            self._check_hash_tooltips(current_content)
+
             
             # Check for photo reference pattern
             # self._check_photo_reference(current_content)  # Temporarily disabled
