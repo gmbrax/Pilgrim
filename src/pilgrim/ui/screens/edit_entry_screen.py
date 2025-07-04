@@ -60,6 +60,7 @@ class EditEntryScreen(Screen):
         self._last_photo_suggestion_type = None
         self._active_notification = None
         self._notification_timer = None
+        self.references = []
 
         # Main header
         self.header = Header(name="Pilgrim v6", classes="EditEntryScreen-header")
@@ -453,7 +454,7 @@ class EditEntryScreen(Screen):
             self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
             
-        # Get selected photo
+        # Get a selected photo
         if self.photo_list.highlighted is None:
             self.notify("No photo selected", severity="warning")
             return
@@ -505,10 +506,15 @@ class EditEntryScreen(Screen):
             return
         
         # Open add photo modal
-        self.app.push_screen(
-            AddPhotoModal(diary_id=self.diary_id),
-            self.handle_add_photo_result
-        )
+        try:
+            self.notify("Trying to push the modal screen...")
+            self.app.push_screen(
+                AddPhotoModal(diary_id=self.diary_id),
+                self.handle_add_photo_result
+            )
+        except Exception as e:
+            self.notify(f"Error: {str(e)}", severity="error")
+            self.app.notify("Error: {str(e)}", severity="error")
 
     def handle_add_photo_result(self, result: dict | None) -> None:
         """Callback that processes the add photo modal result."""
@@ -853,6 +859,8 @@ class EditEntryScreen(Screen):
 
     def action_save(self) -> None:
         """Saves the current entry"""
+        self._get_all_references()
+        self._validate_references()
         if self.is_new_entry:
             content = self.text_entry.text.strip()
             if not content:
@@ -937,7 +945,29 @@ class EditEntryScreen(Screen):
 
         except Exception as e:
             self.notify(f"Error updating entry: {str(e)}")
+    def _get_all_references(self):
 
+        text_content = self.text_entry.text
+        matches = re.findall("(\[\[photo::?(?:\w|\s)*\]\])", text_content)
+        for match in matches:
+            if re.match(r"\[\[photo::\w+\]\]", match):
+                if {'type': 'hash','value':match.replace("[[photo::", "").replace("]]", "").strip()} not in self.references:
+                    self.references.append(
+                        {'type': 'hash', 'value': match.replace("[[photo::", "").replace("]]", "").strip()})
+            elif re.match(r"\[\[photo:\w+\]\]", match):
+                if {'type': 'name', 'value': match.replace("[[photo:", "").replace("]]", "").strip()} not in self.references:
+                    self.references.append(
+                        {'type': 'name', 'value': match.replace("[[photo:", "").replace("]]", "").strip()})
+            else:
+                self.references.append({'type': 'unknown', 'value': match})
+        self.notify(f"🔍 Referências encontradas: {str(self.references)}", markup=False)
+
+    def _validate_references(self):
+       for reference in self.references:
+           if reference['type'] == 'hash':
+               self.notify("hash")
+           elif reference['type'] == 'name':
+                self.notify("name")
     def on_key(self, event):
         print("DEBUG: on_key called with", event.key, "sidebar_focused:", self.sidebar_focused, "sidebar_visible:", self.sidebar_visible)
         # Sidebar contextual shortcuts
