@@ -61,6 +61,7 @@ class EditEntryScreen(Screen):
         self._active_notification = None
         self._notification_timer = None
         self.references = []
+        self.cached_photos = []
 
         # Main header
         self.header = Header(name="Pilgrim v6", classes="EditEntryScreen-header")
@@ -116,20 +117,11 @@ class EditEntryScreen(Screen):
         self.footer = Footer(classes="EditEntryScreen-footer")
 
     def _update_footer_context(self):
-        """Forces footer refresh to show updated bindings"""
+        """Force footer refresh to show updated bindings"""
         self.refresh()
 
-    def _generate_photo_hash(self, photo: Photo) -> str:
-        """Generate a short, unique hash for a photo"""
-        unique_string = f"{photo.name}_{photo.id}_{photo.addition_date}"
-        hash_object = hashlib.md5(unique_string.encode())
-        return hash_object.hexdigest()[:8]
-
-
-
-
     def _get_cursor_position(self) -> tuple:
-        """Get current cursor position for tooltip placement"""
+        """Get the current cursor position for tooltip placement"""
         try:
             # Get cursor position from text area
             cursor_location = self.text_entry.cursor_location
@@ -290,26 +282,26 @@ class EditEntryScreen(Screen):
     def _update_sidebar_content(self):
         """Updates the sidebar content with photos for the current diary"""
         try:
-            photos = self._load_photos_for_diary(self.diary_id)
+            self._load_photos_for_diary(self.diary_id)
 
             # Clear existing options safely
             self.photo_list.clear_options()
 
-            # Add 'Ingest Photo' option at the top
+            # Add the 'Ingest Photo' option at the top
             self.photo_list.add_option("➕ Ingest Photo")
 
-            if not photos:
+            if not self.cached_photos:
                 self.photo_info.update("No photos found for this diary")
                 self.help_text.update("📸 No photos available\n\nUse Photo Manager to add photos")
                 return
 
             # Add photos to the list with hash
-            for photo in photos:
+            for photo in self.cached_photos:
                 # Show name and hash in the list
                 photo_hash = str(photo.photo_hash)[:8]
                 self.photo_list.add_option(f"📷 {photo.name} \\[{photo_hash}\]")
 
-            self.photo_info.update(f"📸 {len(photos)} photos in diary")
+            self.photo_info.update(f"📸 {len(self.cached_photos)} photos in diary")
             
             # Updated help a text with hash information
             help_text = (
@@ -332,19 +324,19 @@ class EditEntryScreen(Screen):
             self.photo_info.update("Error loading photos")
             self.help_text.update("Error loading sidebar content")
 
-    def _load_photos_for_diary(self, diary_id: int) -> List[Photo]:
+    def _load_photos_for_diary(self, diary_id: int):
         """Loads all photos for the specific diary"""
         try:
             service_manager = self.app.service_manager
             photo_service = service_manager.get_photo_service()
             
             all_photos = photo_service.read_all()
-            photos = [photo for photo in all_photos if photo.fk_travel_diary_id == diary_id]
-            photos.sort(key=lambda x: x.id)
-            return photos
+            self.cached_photos = [photo for photo in all_photos if photo.fk_travel_diary_id == diary_id]
+            self.cached_photos.sort(key=lambda x: x.id)
+
         except Exception as e:
             self.notify(f"Error loading photos: {str(e)}")
-            return []
+
 
     def action_toggle_sidebar(self):
         """Toggles the sidebar visibility"""
@@ -401,6 +393,7 @@ class EditEntryScreen(Screen):
 
     def action_insert_photo(self):
         """Insert selected photo into text"""
+
         if not self.sidebar_focused or not self.sidebar_visible:
             self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
@@ -413,12 +406,12 @@ class EditEntryScreen(Screen):
         # Adjust index because of 'Ingest Photo' at the top
         photo_index = self.photo_list.highlighted - 1
             
-        photos = self._load_photos_for_diary(self.diary_id)
-        if photo_index < 0 or photo_index >= len(photos):
+        self._load_photos_for_diary(self.diary_id)
+        if photo_index < 0 or photo_index >= len(self.cached_photos):
             self.notify("No photo selected", severity="warning")
             return
             
-        selected_photo = photos[photo_index]
+        selected_photo = self.cached_photos[photo_index]
         photo_hash = selected_photo.photo_hash[:8]
         
         # Insert photo reference using hash format without escaping
@@ -534,7 +527,7 @@ class EditEntryScreen(Screen):
     def handle_delete_photo_result(self, result: bool) -> None:
         """Callback that processes the delete photo modal result."""
         if result:
-            # Get the selected photo with adjusted index
+            # Get the selected photo with an adjusted index
             photos = self._load_photos_for_diary(self.diary_id)
             photo_index = self.photo_list.highlighted - 1  # Adjust for 'Ingest Photo' at top
             
@@ -642,6 +635,31 @@ class EditEntryScreen(Screen):
         except Exception as e:
             self.notify(f"Error updating photo: {str(e)}")
 
+    def _get_linked_photos_from_text(self) -> Optional[List[Photo]]:
+        """
+        Valida as referências de hash curto no texto contra o cache em memória.
+        - Retorna uma lista de objetos Photo se todas as referências forem válidas.
+        - Retorna None se UMA ÚNICA referência for inválida ou ambígua.
+        """
+        text = self.text_entry.text
+        pattern = r"\[\[photo::(\w{8})\]\]"
+        short_hashes_in_text = set(re.findall(pattern, text))
+
+        if not short_hashes_in_text:
+            return []  # Nenhuma referência, operação válida.
+
+        linked_photos: List[Photo] = []
+        for short_hash in short_hashes_in_text:
+            found_photos = [p for p in self.cached_photos if p.photo_hash.startswith(short_hash)]
+
+            if len(found_photos) == 1:
+                linked_photos.append(found_photos[0])
+            else:
+                self.notify(f"❌ Erro: Referência '[{short_hash}]' é inválida ou ambígua!", severity="error", timeout=10)
+                return None  # Aborta a operação
+
+        return linked_photos
+
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         """Handles photo selection in the sidebar"""
         if not self.sidebar_visible:
@@ -686,7 +704,7 @@ class EditEntryScreen(Screen):
             
 
             
-            # Check for photo reference pattern
+            # Check for a photo reference pattern
             # self._check_photo_reference(current_content)  # Temporarily disabled
             
             if current_content != self._original_content:
@@ -700,7 +718,7 @@ class EditEntryScreen(Screen):
 
     def on_focus(self, event) -> None:
         """Captures focus changes to update footer"""
-        # Check if focus changed to/from sidebar
+        # Check if the focus changed to/from sidebar
         if hasattr(event.widget, 'id'):
             if event.widget.id == "photo_list":
                 self.sidebar_focused = True
@@ -922,9 +940,8 @@ class EditEntryScreen(Screen):
         photo_service = self.app.service_manager.get_photo_service()
         for reference in self.references:
            if reference['type'] == 'hash':
-               pass
-           elif reference['type'] == 'name':
-                self.notify("name")
+              pass
+
     def on_key(self, event):
         print("DEBUG: on_key called with", event.key, "sidebar_focused:", self.sidebar_focused, "sidebar_visible:", self.sidebar_visible)
         # Sidebar contextual shortcuts
