@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 from datetime import datetime
+import hashlib
 
 
 from pilgrim.models.photo import Photo
@@ -9,6 +10,12 @@ from pilgrim.models.travel_diary import TravelDiary
 class PhotoService:
     def __init__(self, session):
         self.session = session
+    def _hash_file(self,filepath):
+        hash_func = hashlib.new('sha3_384')
+        with open(filepath, 'rb') as f:
+            while chunk := f.read(8192):
+                hash_func.update(chunk)
+        return hash_func.hexdigest()
 
     def create(self, filepath: Path, name: str, travel_diary_id: int, caption=None, addition_date=None) -> Photo | None:
         travel_diary = self.session.query(TravelDiary).filter(TravelDiary.id == travel_diary_id).first()
@@ -27,7 +34,8 @@ class PhotoService:
             name=name, 
             caption=caption, 
             fk_travel_diary_id=travel_diary_id,
-            addition_date=addition_date
+            addition_date=addition_date,
+            photo_hash=self._hash_file(filepath)
         )
         self.session.add(new_photo)
         self.session.commit()
@@ -47,6 +55,7 @@ class PhotoService:
             original.name = photo_dst.name
             original.addition_date = photo_dst.addition_date
             original.caption = photo_dst.caption
+            original.photo_hash = original.photo_hash
             if photo_dst.entries and len(photo_dst.entries) > 0:
                 if original.entries is None:
                     original.entries = []
@@ -66,7 +75,10 @@ class PhotoService:
                 addition_date=excluded.addition_date,
                 caption=excluded.caption,
                 fk_travel_diary_id=excluded.fk_travel_diary_id,
-                id=excluded.id
+                id=excluded.id,
+                photo_hash=excluded.photo_hash,
+                entries=excluded.entries,
+
             )
             
             self.session.delete(excluded)
