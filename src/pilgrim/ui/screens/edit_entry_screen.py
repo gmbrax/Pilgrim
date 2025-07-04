@@ -125,55 +125,6 @@ class EditEntryScreen(Screen):
         hash_object = hashlib.md5(unique_string.encode())
         return hash_object.hexdigest()[:8]
 
-    def _fuzzy_search(self, query: str, photos: List[Photo]) -> List[Photo]:
-        """Fuzzy search for photos by name or hash"""
-        if not query:
-            return []
-        
-        query = query.lower()
-        results = []
-        
-        for photo in photos:
-            photo_hash = self._generate_photo_hash(photo)
-            photo_name = photo.name.lower()
-            
-            # Check if query is in name (substring match)
-            if query in photo_name:
-                results.append((photo, 1, f"Name match: {query} in {photo.name}"))
-                continue
-            
-            # Check if query is in hash (substring match)
-            if query in photo_hash:
-                results.append((photo, 2, f"Hash match: {query} in {photo_hash}"))
-                continue
-            
-            # Fuzzy match for name (check if all characters are present in order)
-            if self._fuzzy_match(query, photo_name):
-                results.append((photo, 3, f"Fuzzy name match: {query} in {photo.name}"))
-                continue
-            
-            # Fuzzy match for hash
-            if self._fuzzy_match(query, photo_hash):
-                results.append((photo, 4, f"Fuzzy hash match: {query} in {photo_hash}"))
-                continue
-        
-        # Sort by priority (lower number = higher priority)
-        results.sort(key=lambda x: x[1])
-        return [photo for photo, _, _ in results]
-
-    def _fuzzy_match(self, query: str, text: str) -> bool:
-        """Check if query characters appear in text in order (fuzzy match)"""
-        if not query:
-            return True
-        
-        query_idx = 0
-        for char in text:
-            if query_idx < len(query) and char == query[query_idx]:
-                query_idx += 1
-                if query_idx == len(query):
-                    return True
-        return False
-
 
 
 
@@ -355,12 +306,12 @@ class EditEntryScreen(Screen):
             # Add photos to the list with hash
             for photo in photos:
                 # Show name and hash in the list
-                photo_hash = self._generate_photo_hash(photo)
-                self.photo_list.add_option(f"📷 {photo.name} \\[{photo_hash}\\]")
+                photo_hash = str(photo.photo_hash)[:8]
+                self.photo_list.add_option(f"📷 {photo.name} \\[{photo_hash}\]")
 
             self.photo_info.update(f"📸 {len(photos)} photos in diary")
             
-            # Updated help text with hash information
+            # Updated help a text with hash information
             help_text = (
                 "[b]⌨️  Sidebar Shortcuts[/b]\n"
                 "[b][green]i[/green][/b]: Insert photo into entry\n"
@@ -468,13 +419,13 @@ class EditEntryScreen(Screen):
             return
             
         selected_photo = photos[photo_index]
-        photo_hash = self._generate_photo_hash(selected_photo)
+        photo_hash = selected_photo.photo_hash[:8]
         
         # Insert photo reference using hash format without escaping
         # Using raw string to avoid markup conflicts with [[
         photo_ref = f"[[photo::{photo_hash}]]"
         
-        # Insert at cursor position
+        # Insert at the cursor position
         self.text_entry.insert(photo_ref)
         
         # Switch focus back to editor
@@ -696,8 +647,13 @@ class EditEntryScreen(Screen):
         if not self.sidebar_visible:
             return
             
+        # Handle "Ingest Photo" option
+        if event.option_index == 0:  # First option is "Ingest Photo"
+            self.action_ingest_new_photo()
+            return
+            
         photos = self._load_photos_for_diary(self.diary_id)
-        if not photos or event.option_index <= 0:  # Skip 'Ingest Photo' option
+        if not photos:
             return
             
         # Adjust index because of 'Ingest Photo' at the top
@@ -706,7 +662,7 @@ class EditEntryScreen(Screen):
             return
             
         selected_photo = photos[photo_index]
-        photo_hash = self._generate_photo_hash(selected_photo)
+        photo_hash = selected_photo.photo_hash[:8]
         self.notify(f"Selected photo: {selected_photo.name} \\[{photo_hash}\\]")
         
         # Update photo info with details including hash
@@ -963,9 +919,10 @@ class EditEntryScreen(Screen):
         self.notify(f"🔍 Referências encontradas: {str(self.references)}", markup=False)
 
     def _validate_references(self):
-       for reference in self.references:
+        photo_service = self.app.service_manager.get_photo_service()
+        for reference in self.references:
            if reference['type'] == 'hash':
-               self.notify("hash")
+               pass
            elif reference['type'] == 'name':
                 self.notify("name")
     def on_key(self, event):
