@@ -16,6 +16,7 @@ class Photo(Base):
     name = Column(String)
     addition_date = Column(DateTime, default=datetime.now)
     caption = Column(String)
+    photo_hash = Column(String,name='hash')
     entries = relationship(
         "Entry",
         secondary=photo_entry_association,
@@ -24,7 +25,7 @@ class Photo(Base):
 
     fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"),nullable=False)
 
-    def __init__(self, filepath, name, addition_date=None, caption=None, entries=None, fk_travel_diary_id=None, **kw: Any):
+    def __init__(self, filepath, name, photo_hash, addition_date=None, caption=None, entries=None, fk_travel_diary_id=None, **kw: Any):
         super().__init__(**kw)
         # Convert Path to string if needed
         if isinstance(filepath, Path):
@@ -34,6 +35,7 @@ class Photo(Base):
         self.name = name
         self.addition_date = addition_date if addition_date is not None else datetime.now()
         self.caption = caption
+        self.photo_hash = photo_hash
         self.entries = entries if entries is not None else []
         if fk_travel_diary_id is not None:
             self.fk_travel_diary_id = fk_travel_diary_id

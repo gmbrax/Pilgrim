@@ -2,6 +2,9 @@ from typing import Optional, List
 import asyncio
 from datetime import datetime
 from pathlib import Path
+import hashlib
+import re
+import time
 
 from textual.app import ComposeResult
 from textual.screen import Screen
@@ -23,13 +26,15 @@ class EditEntryScreen(Screen):
     TITLE = "Pilgrim - Edit"
 
     BINDINGS = [
-        Binding("ctrl+s", "save", "Save"),
-        Binding("ctrl+n", "next_entry", "Next/New Entry"),
-        Binding("ctrl+b", "prev_entry", "Previous Entry"),
-        Binding("ctrl+r", "rename_entry", "Rename Entry"),
-        Binding("escape", "back_to_list", "Back to List"),
-        Binding("f8", "toggle_sidebar", "Toggle Sidebar"),
-        Binding("f9", "toggle_focus", "Focus Sidebar/Editor"),
+        ("ctrl+q", "quit", "Quit"),
+        ("ctrl+s", "save", "Save"),
+        ("ctrl+n", "new_entry", "New Entry"),
+        ("ctrl+shift+n", "next_entry", "Next Entry"),
+        ("ctrl+shift+p", "prev_entry", "Previous Entry"),
+        ("ctrl+r", "rename_entry", "Rename Entry"),
+        ("f8", "toggle_sidebar", "Toggle Photos"),
+        ("f9", "toggle_focus", "Toggle Focus"),
+        ("escape", "back_to_list", "Back to List"),
     ]
 
     def __init__(self, diary_id: int = 1):
@@ -50,6 +55,13 @@ class EditEntryScreen(Screen):
         self.sidebar_visible = False
         self.sidebar_focused = False
         self._sidebar_opened_once = False
+        self._active_tooltip = None
+        self._last_photo_suggestion_notification = None
+        self._last_photo_suggestion_type = None
+        self._active_notification = None
+        self._notification_timer = None
+        self.references = []
+        self.cached_photos = []
 
         # Main header
         self.header = Header(name="Pilgrim v6", classes="EditEntryScreen-header")
@@ -105,8 +117,27 @@ class EditEntryScreen(Screen):
         self.footer = Footer(classes="EditEntryScreen-footer")
 
     def _update_footer_context(self):
-        """Forces footer refresh to show updated bindings"""
+        """Force footer refresh to show updated bindings"""
         self.refresh()
+
+    def _get_cursor_position(self) -> tuple:
+        """Get the current cursor position for tooltip placement"""
+        try:
+            # Get cursor position from text area
+            cursor_location = self.text_entry.cursor_location
+            if cursor_location:
+                # Get the text area region
+                text_region = self.text_entry.region
+                if text_region:
+                    # Calculate position relative to text area
+                    # Position tooltip below the current line, not over it
+                    x = text_region.x + min(cursor_location[0], text_region.width - 40)  # Keep within bounds
+                    y = text_region.y + cursor_location[1] + 2  # 2 lines below cursor
+                    return (x, y)
+        except:
+            pass
+        return None
+
 
     def compose(self) -> ComposeResult:
         print("DEBUG: EditEntryScreen COMPOSE", getattr(self, 'sidebar_visible', None))
@@ -123,20 +154,21 @@ class EditEntryScreen(Screen):
         """Called when the screen is mounted"""
         self.sidebar.display = False
         self.sidebar_visible = False
-        
+
         # First update diary info, then refresh entries
         self.update_diary_info()
         self.refresh_entries()
-        
+
         # Initialize footer with editor context
         self._update_footer_context()
+        # self.app.mount(self._photo_suggestion_widget)  # Temporarily disabled
 
     def update_diary_info(self):
         """Updates diary information"""
         try:
             service_manager = self.app.service_manager
             travel_diary_service = service_manager.get_travel_diary_service()
-            
+
             diary = travel_diary_service.read_by_id(self.diary_id)
             if diary:
                 self.diary_name = diary.name
@@ -149,7 +181,7 @@ class EditEntryScreen(Screen):
             self.diary_name = f"Diary {self.diary_id}"
             self.diary_info.update(f"Diary: {self.diary_name}")
             self.notify(f"Error loading diary info: {str(e)}")
-        
+
         self._ensure_diary_info_updated()
 
     def _ensure_diary_info_updated(self):
@@ -179,7 +211,7 @@ class EditEntryScreen(Screen):
 
         except Exception as e:
             self.notify(f"Error loading entries: {str(e)}")
-        
+
         self._ensure_diary_info_updated()
 
     def _update_status_indicator(self, text: str, css_class: str):
@@ -249,141 +281,184 @@ class EditEntryScreen(Screen):
 
     def _update_sidebar_content(self):
         """Updates the sidebar content with photos for the current diary"""
-        photos = self._load_photos_for_diary(self.diary_id)
+        try:
+            self._load_photos_for_diary(self.diary_id)
 
-        # Clear existing options safely
-        self.photo_list.clear_options()
+            # Clear existing options safely
+            self.photo_list.clear_options()
 
-        # Add 'Ingest Photo' option at the top
-        self.photo_list.add_option("➕ Ingest Photo")
+            # Add the 'Ingest Photo' option at the top
+            self.photo_list.add_option("➕ Ingest Photo")
 
-        if not photos:
-            self.photo_info.update("No photos found for this diary")
-            self.help_text.update("📸 No photos available\n\nUse Photo Manager to add photos")
-            return
+            if not self.cached_photos:
+                self.photo_info.update("No photos found for this diary")
+                self.help_text.update("📸 No photos available\n\nUse Photo Manager to add photos")
+                return
 
-        # Add photos to the list
-        for photo in photos:
-            self.photo_list.add_option(f"📷 {photo.name}")
+            # Add photos to the list with hash
+            for photo in self.cached_photos:
+                # Show name and hash in the list
+                photo_hash = str(photo.photo_hash)[:8]
+                self.photo_list.add_option(f"📷 {photo.name} \\[{photo_hash}\]")
 
-        self.photo_info.update(f"📸 {len(photos)} photos in diary")
-        
-        # English, visually distinct help text
-        help_text = (
-            "[b]⌨️  Sidebar Shortcuts[/b]\n"
-            "[b][green]i[/green][/b]: Insert photo into entry\n"
-            "[b][green]n[/green][/b]: Add new photo\n"
-            "[b][green]d[/green][/b]: Delete selected photo\n"
-            "[b][green]e[/green][/b]: Edit selected photo\n"
-            "[b][yellow]Tab[/yellow][/b]: Back to editor\n"
-            "[b][yellow]F8[/yellow][/b]: Show/hide sidebar\n"
-            "[b][yellow]F9[/yellow][/b]: Switch focus (if needed)"
-        )
-        self.help_text.update(help_text)
+            self.photo_info.update(f"📸 {len(self.cached_photos)} photos in diary")
 
-    def _load_photos_for_diary(self, diary_id: int) -> List[Photo]:
+            # Updated help a text with hash information
+            help_text = (
+                "[b]⌨️  Sidebar Shortcuts[/b]\n"
+                "[b][green]i[/green][/b]: Insert photo into entry\n"
+                "[b][green]n[/green][/b]: Add new photo\n"
+                "[b][green]d[/green][/b]: Delete selected photo\n"
+                "[b][green]e[/green][/b]: Edit selected photo\n"
+                "[b][yellow]Tab[/yellow][/b]: Back to editor\n"
+                "[b][yellow]F8[/yellow][/b]: Show/hide sidebar\n"
+                "[b][yellow]F9[/yellow][/b]: Switch focus (if needed)\n\n"
+                "[b]📝 Photo References[/b]\n"
+                "Use: \\[\\[photo:name:hash\\]\\]\n"
+                "Or: \\[\\[photo::hash\\]\\]"
+            )
+            self.help_text.update(help_text)
+        except Exception as e:
+            self.notify(f"Error updating sidebar: {str(e)}", severity="error")
+            # Set fallback content
+            self.photo_info.update("Error loading photos")
+            self.help_text.update("Error loading sidebar content")
+
+    def _load_photos_for_diary(self, diary_id: int):
         """Loads all photos for the specific diary"""
         try:
             service_manager = self.app.service_manager
             photo_service = service_manager.get_photo_service()
-            
+
             all_photos = photo_service.read_all()
-            photos = [photo for photo in all_photos if photo.fk_travel_diary_id == diary_id]
-            photos.sort(key=lambda x: x.id)
-            return photos
+            self.cached_photos = [photo for photo in all_photos if photo.fk_travel_diary_id == diary_id]
+            self.cached_photos.sort(key=lambda x: x.id)
+
         except Exception as e:
             self.notify(f"Error loading photos: {str(e)}")
-            return []
+
 
     def action_toggle_sidebar(self):
         """Toggles the sidebar visibility"""
-        print("DEBUG: TOGGLE SIDEBAR", self.sidebar_visible)
-        self.sidebar_visible = not self.sidebar_visible
-        
-        if self.sidebar_visible:
-            self.sidebar.display = True
-            self._update_sidebar_content()
-            # Automatically focus the sidebar when opening
-            self.sidebar_focused = True
-            self.photo_list.focus()
-            # Notification when opening the sidebar for the first time
-            if not self._sidebar_opened_once:
-                self.notify(
-                    "Sidebar opened and focused! Use the shortcuts shown in the help panel.",
-                    severity="info"
-                )
-                self._sidebar_opened_once = True
-        else:
+        try:
+            print("DEBUG: TOGGLE SIDEBAR", self.sidebar_visible)
+            self.sidebar_visible = not self.sidebar_visible
+
+            if self.sidebar_visible:
+                self.sidebar.display = True
+                self._update_sidebar_content()
+                # Automatically focus the sidebar when opening
+                self.sidebar_focused = True
+                self.photo_list.focus()
+                # Notification when opening the sidebar for the first time
+                if not self._sidebar_opened_once:
+                    self.notify(
+                        "Sidebar opened and focused! Use the shortcuts shown in the help panel.",
+                        severity="info"
+                    )
+                    self._sidebar_opened_once = True
+            else:
+                self.sidebar.display = False
+                self.sidebar_focused = False  # Reset focus when hiding
+                self.text_entry.focus()  # Return focus to editor
+
+            # Update footer after context change
+            self._update_footer_context()
+            self.refresh(layout=True)
+        except Exception as e:
+            self.notify(f"Error toggling sidebar: {str(e)}", severity="error")
+            # Reset state on error
+            self.sidebar_visible = False
+            self.sidebar_focused = False
             self.sidebar.display = False
-            self.sidebar_focused = False  # Reset focus when hiding
-            self.text_entry.focus()  # Return focus to editor
-        
-        # Update footer after context change
-        self._update_footer_context()
-        self.refresh(layout=True)
 
     def action_toggle_focus(self):
         """Toggles focus between editor and sidebar"""
-        print("DEBUG: TOGGLE FOCUS", self.sidebar_visible, self.sidebar_focused)
+        print("DEBUG: TOGGLE FOCUS called", self.sidebar_visible, self.sidebar_focused)
         if not self.sidebar_visible:
             # If sidebar is not visible, show it and focus it
+            print("DEBUG: Sidebar not visible, opening it")
             self.action_toggle_sidebar()
             return
-        
+
         self.sidebar_focused = not self.sidebar_focused
+        print("DEBUG: Sidebar focused changed to", self.sidebar_focused)
         if self.sidebar_focused:
             self.photo_list.focus()
         else:
             self.text_entry.focus()
-        
+
         # Update footer after focus change
         self._update_footer_context()
 
     def action_insert_photo(self):
         """Insert selected photo into text"""
+
         if not self.sidebar_focused or not self.sidebar_visible:
             self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
-            
-        # Get selected photo
+
+        # Get a selected photo
         if self.photo_list.highlighted is None:
             self.notify("No photo selected", severity="warning")
             return
-            
+
         # Adjust index because of 'Ingest Photo' at the top
         photo_index = self.photo_list.highlighted - 1
-            
-        photos = self._load_photos_for_diary(self.diary_id)
-        if photo_index < 0 or photo_index >= len(photos):
+
+        self._load_photos_for_diary(self.diary_id)
+        if photo_index < 0 or photo_index >= len(self.cached_photos):
             self.notify("No photo selected", severity="warning")
             return
-            
-        selected_photo = photos[photo_index]
-        
-        # Insert photo reference into text
-        photo_ref = f"\n[📷 {selected_photo.name}]({selected_photo.filepath})\n"
-        if selected_photo.caption:
-            photo_ref += f"*{selected_photo.caption}*\n"
-        
-        # Insert at cursor position or at end
-        current_text = self.text_entry.text
-        cursor_position = len(current_text)  # Insert at end for now
-        new_text = current_text + photo_ref
-        self.text_entry.text = new_text
-        
-        self.notify(f"Inserted photo: {selected_photo.name}")
+
+        selected_photo = self.cached_photos[photo_index]
+        photo_hash = selected_photo.photo_hash[:8]
+
+        # Insert photo reference using hash format without escaping
+        # Using raw string to avoid markup conflicts with [[
+        photo_ref = f"[[photo::{photo_hash}]]"
+
+        # Insert at the cursor position
+        self.text_entry.insert(photo_ref)
+
+        # Switch focus back to editor
+        self.sidebar_focused = False
+        self.text_entry.focus()
+
+        # Update footer context
+        self._update_footer_context()
+
+        # Show selected photo info
+        photo_details = f"📷 {selected_photo.name}\n"
+        photo_details += f"🔗 {photo_hash}\n"
+        photo_details += f"📅 {selected_photo.addition_date}\n"
+        photo_details += f"💬 {selected_photo.caption or 'No caption'}\n"
+        photo_details += f"📁 {selected_photo.filepath}\n\n"
+        photo_details += f"[b]Reference formats:[/b]\n"
+        photo_details += f"\\[\\[photo:{selected_photo.name}:{photo_hash}\\]\\]\n"
+        photo_details += f"\\[\\[photo::{photo_hash}\\]\\]"
+
+        self.photo_info.update(photo_details)
+
+        # Show notification without escaping brackets
+        self.notify(f"Inserted photo: {selected_photo.name} \\[{photo_hash}\\]", severity="information")
 
     def action_ingest_new_photo(self):
         """Ingest a new photo using modal"""
         if not self.sidebar_focused or not self.sidebar_visible:
             self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
-        
+
         # Open add photo modal
-        self.app.push_screen(
-            AddPhotoModal(diary_id=self.diary_id),
-            self.handle_add_photo_result
-        )
+        try:
+            self.notify("Trying to push the modal screen...")
+            self.app.push_screen(
+                AddPhotoModal(diary_id=self.diary_id),
+                self.handle_add_photo_result
+            )
+        except Exception as e:
+            self.notify(f"Error: {str(e)}", severity="error")
+            self.app.notify("Error: {str(e)}", severity="error")
 
     def handle_add_photo_result(self, result: dict | None) -> None:
         """Callback that processes the add photo modal result."""
@@ -403,7 +478,7 @@ class EditEntryScreen(Screen):
             photo_service = service_manager.get_photo_service()
 
             current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+
             new_photo = photo_service.create(
                 filepath=Path(photo_data["filepath"]),
                 name=photo_data["name"],
@@ -428,21 +503,21 @@ class EditEntryScreen(Screen):
         if not self.sidebar_focused or not self.sidebar_visible:
             self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
-            
+
         if self.photo_list.highlighted is None:
             self.notify("No photo selected", severity="warning")
             return
-            
+
         # Adjust index because of 'Ingest Photo' at the top
         photo_index = self.photo_list.highlighted - 1
-            
+
         photos = self._load_photos_for_diary(self.diary_id)
         if photo_index < 0 or photo_index >= len(photos):
             self.notify("No photo selected", severity="warning")
             return
-            
+
         selected_photo = photos[photo_index]
-        
+
         # Open confirm delete modal
         self.app.push_screen(
             ConfirmDeleteModal(photo=selected_photo),
@@ -452,16 +527,16 @@ class EditEntryScreen(Screen):
     def handle_delete_photo_result(self, result: bool) -> None:
         """Callback that processes the delete photo modal result."""
         if result:
-            # Get the selected photo with adjusted index
+            # Get the selected photo with an adjusted index
             photos = self._load_photos_for_diary(self.diary_id)
             photo_index = self.photo_list.highlighted - 1  # Adjust for 'Ingest Photo' at top
-            
+
             if self.photo_list.highlighted is None or photo_index < 0 or photo_index >= len(photos):
                 self.notify("Photo no longer available", severity="error")
                 return
-                
+
             selected_photo = photos[photo_index]
-            
+
             # Schedule async deletion
             self.call_later(self._async_delete_photo, selected_photo)
         else:
@@ -491,21 +566,21 @@ class EditEntryScreen(Screen):
         if not self.sidebar_focused or not self.sidebar_visible:
             self.notify("Use F8 to open the sidebar first.", severity="warning")
             return
-            
+
         if self.photo_list.highlighted is None:
             self.notify("No photo selected", severity="warning")
             return
-            
+
         # Adjust index because of 'Ingest Photo' at the top
         photo_index = self.photo_list.highlighted - 1
-        
+
         photos = self._load_photos_for_diary(self.diary_id)
         if photo_index < 0 or photo_index >= len(photos):
             self.notify("No photo selected", severity="warning")
             return
-            
+
         selected_photo = photos[photo_index]
-        
+
         # Open edit photo modal
         self.app.push_screen(
             EditPhotoModal(photo=selected_photo),
@@ -521,13 +596,13 @@ class EditEntryScreen(Screen):
         # Get the selected photo with adjusted index
         photos = self._load_photos_for_diary(self.diary_id)
         photo_index = self.photo_list.highlighted - 1  # Adjust for 'Ingest Photo' at top
-        
+
         if self.photo_list.highlighted is None or photo_index < 0 or photo_index >= len(photos):
             self.notify("Photo no longer available", severity="error")
             return
-            
+
         selected_photo = photos[photo_index]
-        
+
         # Schedule async update
         self.call_later(self._async_update_photo, selected_photo, result)
 
@@ -560,34 +635,140 @@ class EditEntryScreen(Screen):
         except Exception as e:
             self.notify(f"Error updating photo: {str(e)}")
 
+    def _get_linked_photos_from_text(self) -> Optional[List[Photo]]:
+        """
+        Validates photo references in the text against the memory cache.
+        Checks for:
+        - Malformed references
+        - Incorrect hash length
+        - Invalid or ambiguous hashes
+        Returns a list of unique photos (no duplicates even if referenced multiple times).
+        """
+        text = self.text_entry.text
+        
+        # First check for malformed references
+        malformed_pattern = r"\[\[photo::([^\]]*)\](?!\])"  # Missing ] at the end
+        malformed_matches = re.findall(malformed_pattern, text)
+        if malformed_matches:
+            for match in malformed_matches:
+                self.notify(f"❌ Malformed reference: '\\[\\[photo::{match}\\]' - Missing closing '\\]'", severity="error", timeout=10)
+            return None
+
+        # Look for incorrect format references
+        invalid_format = r"\[\[photo:[^:\]]+\]\]"  # [[photo:something]] without ::
+        invalid_matches = re.findall(invalid_format, text)
+        if invalid_matches:
+            for match in invalid_matches:
+                escaped_match = match.replace("[", "\\[").replace("]", "\\]")
+                self.notify(f"❌ Invalid format: '{escaped_match}' - Use '\\[\\[photo::hash\\]\\]'", severity="error", timeout=10)
+            return None
+
+        # Now look for all references to validate
+        pattern = r"\[\[photo::([^\]]+)\]\]"
+        # Use set to get unique references only
+        all_refs = set(re.findall(pattern, text))
+        
+        if not all_refs:
+            return []  # No references, valid operation
+
+        self._load_photos_for_diary(self.diary_id)
+        linked_photos: List[Photo] = []
+        processed_hashes = set()  # Keep track of processed hashes to avoid duplicates
+
+        for ref in all_refs:
+            # Skip if we already processed this hash
+            if ref in processed_hashes:
+                continue
+
+            # Validate hash length
+            if len(ref) != 8:
+                self.notify(
+                    f"❌ Invalid hash: '{ref}' - Must be exactly 8 characters long",
+                    severity="error",
+                    timeout=10
+                )
+                return None
+
+            # Validate if contains only valid hexadecimal characters
+            if not re.match(r"^[0-9A-Fa-f]{8}$", ref):
+                self.notify(
+                    f"❌ Invalid hash: '{ref}' - Use only hexadecimal characters (0-9, A-F)",
+                    severity="error",
+                    timeout=10
+                )
+                return None
+
+            # Search for photos matching the hash
+            found_photos = [p for p in self.cached_photos if p.photo_hash.startswith(ref)]
+
+            if len(found_photos) == 0:
+                self.notify(
+                    f"❌ Hash not found: '{ref}' - No photo matches this hash",
+                    severity="error",
+                    timeout=10
+                )
+                return None
+            elif len(found_photos) > 1:
+                self.notify(
+                    f"❌ Ambiguous hash: '{ref}' - Matches multiple photos",
+                    severity="error",
+                    timeout=10
+                )
+                return None
+            else:
+                linked_photos.append(found_photos[0])
+                processed_hashes.add(ref)  # Mark this hash as processed
+
+        # Convert list to set and back to list to ensure uniqueness of photos
+        return list(set(linked_photos))
+
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         """Handles photo selection in the sidebar"""
         if not self.sidebar_visible:
             return
-        # If 'Ingest Photo' is selected (always index 0)
-        if event.option_index == 0:
+
+        # Handle "Ingest Photo" option
+        if event.option_index == 0:  # First option is "Ingest Photo"
             self.action_ingest_new_photo()
             return
+
         photos = self._load_photos_for_diary(self.diary_id)
+        if not photos:
+            return
+
         # Adjust index because of 'Ingest Photo' at the top
         photo_index = event.option_index - 1
-        if not photos or photo_index >= len(photos):
+        if photo_index >= len(photos):
             return
+
         selected_photo = photos[photo_index]
-        self.notify(f"Selected photo: {selected_photo.name}")
-        # Update photo info with details
+        photo_hash = selected_photo.photo_hash[:8]
+        self.notify(f"Selected photo: {selected_photo.name} \\[{photo_hash}\\]")
+
+        # Update photo info with details including hash
         photo_details = f"📷 {selected_photo.name}\n"
+        photo_details += f"🔗 {photo_hash}\n"
         photo_details += f"📅 {selected_photo.addition_date}\n"
         if selected_photo.caption:
             photo_details += f"💬 {selected_photo.caption}\n"
-        photo_details += f"📁 {selected_photo.filepath}"
+        photo_details += f"📁 {selected_photo.filepath}\n\n"
+        photo_details += f"[b]Reference formats:[/b]\n"
+        photo_details += f"\\[\\[photo:{selected_photo.name}:{photo_hash}\\]\\]\n"
+        photo_details += f"\\[\\[photo::{photo_hash}\\]\\]"
+
         self.photo_info.update(photo_details)
 
     def on_text_area_changed(self, event) -> None:
-        """Detects text changes to mark as unsaved"""
+        """Detects text changes and shows photo tooltips"""
         if (hasattr(self, 'text_entry') and not self.text_entry.read_only and
                 not getattr(self, '_updating_display', False) and hasattr(self, '_original_content')):
             current_content = self.text_entry.text
+
+
+
+            # Check for a photo reference pattern
+            # self._check_photo_reference(current_content)  # Temporarily disabled
+
             if current_content != self._original_content:
                 if not self.has_unsaved_changes:
                     self.has_unsaved_changes = True
@@ -599,7 +780,7 @@ class EditEntryScreen(Screen):
 
     def on_focus(self, event) -> None:
         """Captures focus changes to update footer"""
-        # Check if focus changed to/from sidebar
+        # Check if the focus changed to/from sidebar
         if hasattr(event.widget, 'id'):
             if event.widget.id == "photo_list":
                 self.sidebar_focused = True
@@ -713,35 +894,42 @@ class EditEntryScreen(Screen):
         self._update_sub_header()
 
     def action_save(self) -> None:
-        """Saves the current entry"""
+        """Salva a entrada após validar e coletar as fotos referenciadas."""
+        photos_to_link = self._get_linked_photos_from_text()
+
+        if photos_to_link is None:
+            self.notify("⚠️ Saving was canceled ", severity="error")
+            return
+
+        content = self.text_entry.text.strip()
         if self.is_new_entry:
-            content = self.text_entry.text.strip()
             if not content:
                 self.notify("Empty entry cannot be saved")
                 return
-
-            # Schedule async creation
-            self.call_later(self._async_create_entry, content)
+            # Passe a lista de fotos para o método de criação
+            self.call_later(self._async_create_entry, content, photos_to_link)
         else:
-            # Schedule async update
-            self.call_later(self._async_update_entry)
+            # Passe a lista de fotos para o método de atualização
+            self.call_later(self._async_update_entry, content, photos_to_link)
 
-    async def _async_create_entry(self, content: str):
-        """Creates a new entry asynchronously"""
+    async def _async_create_entry(self, content: str, photos_to_link: List[Photo]):
+        """Cria uma nova entrada e associa as fotos referenciadas."""
+        service_manager = self.app.service_manager
+        db_session = service_manager.get_db_session()
         try:
-            service_manager = self.app.service_manager
             entry_service = service_manager.get_entry_service()
 
-            current_date = datetime.now()
-
+            # O service.create deve criar o objeto em memória, mas NÃO fazer o commit ainda.
             new_entry = entry_service.create(
                 travel_diary_id=self.diary_id,
                 title=self.new_entry_title,
                 text=content,
-                date=current_date
+                date=datetime.now(),
+                photos=photos_to_link
             )
 
             if new_entry:
+               # A partir daqui, é só atualizar a UI como você já fazia
                 self.entries.append(new_entry)
                 self.entries.sort(key=lambda x: x.id)
 
@@ -752,66 +940,67 @@ class EditEntryScreen(Screen):
 
                 self.is_new_entry = False
                 self.has_unsaved_changes = False
-                self._original_content = new_entry.text
+                self._original_content = new_entry.text  # Pode ser o texto com hashes curtos
                 self.new_entry_title = "New Entry"
                 self.next_entry_id = max(entry.id for entry in self.entries) + 1
 
                 self._update_entry_display()
-                self.notify(f"New entry '{new_entry.title}' saved successfully!")
+                self.notify(f"✅ New Entry: '{new_entry.title}' Successfully saved")
             else:
-                self.notify("Error creating entry")
+                self.notify("❌ Error creating the Entry")
 
         except Exception as e:
-            self.notify(f"Error creating entry: {str(e)}")
+            self.notify(f"❌ Error creating the entry: {str(e)}")
 
-    async def _async_update_entry(self):
-        """Updates the current entry asynchronously"""
+    async def _async_update_entry(self, updated_content: str, photos_to_link: List[Photo]):
+        """Atualiza uma entrada existente e sua associação de fotos."""
+        service_manager = self.app.service_manager
+
         try:
             if not self.entries:
-                self.notify("No entry to update")
+                self.notify("No Entry to update")
                 return
-
+            entry_service = service_manager.get_entry_service()
             current_entry = self.entries[self.current_entry_index]
-            updated_content = self.text_entry.text
-
-            updated_entry = Entry(
+            entry_result : Entry = Entry(
                 title=current_entry.title,
                 text=updated_content,
+                photos=photos_to_link,
                 date=current_entry.date,
-                travel_diary_id=current_entry.fk_travel_diary_id,
-                id=current_entry.id
+                travel_diary_id=self.diary_id
+
             )
+            entry_service.update(current_entry, entry_result)
 
-            service_manager = self.app.service_manager
-            entry_service = service_manager.get_entry_service()
-
-            result = entry_service.update(current_entry, updated_entry)
-
-            if result:
-                current_entry.text = updated_content
-                self.has_unsaved_changes = False
-                self._original_content = updated_content
-                self._update_sub_header()
-                self.notify(f"Entry '{current_entry.title}' saved successfully!")
-            else:
-                self.notify("Error updating entry")
+            # A partir daqui, é só atualizar a UI
+            self.has_unsaved_changes = False
+            self._original_content = updated_content  # Pode ser o texto com hashes curtos
+            self._update_sub_header()
+            self.notify(f"✅ Entry: '{current_entry.title}' sucesfully saved")
 
         except Exception as e:
-            self.notify(f"Error updating entry: {str(e)}")
+           # Desfaz as mudanças em caso de erro
+            self.notify(f"❌ Error on updating the entry:: {str(e)}")
 
     def on_key(self, event):
+
         # Sidebar contextual shortcuts
         if self.sidebar_focused and self.sidebar_visible:
+
             if event.key == "i":
+
                 self.action_insert_photo()
                 event.stop()
             elif event.key == "n":
+
                 self.action_ingest_new_photo()
                 event.stop()
             elif event.key == "d":
+
                 self.action_delete_photo()
                 event.stop()
             elif event.key == "e":
+
                 self.action_edit_photo()
                 event.stop()
         # Shift+Tab: remove indent
@@ -839,4 +1028,4 @@ class EditEntryScreen(Screen):
         # Tab: insert tab
         elif self.focused is self.text_entry and event.key == "tab":
             self.text_entry.insert('\t')
-            event.stop() 
+            event.stop()
