@@ -637,28 +637,90 @@ class EditEntryScreen(Screen):
 
     def _get_linked_photos_from_text(self) -> Optional[List[Photo]]:
         """
-        Valida as referências de hash curto no texto contra o cache em memória.
-        - Retorna uma lista de objetos Photo se todas as referências forem válidas.
-        - Retorna None se UMA ÚNICA referência for inválida ou ambígua.
+        Validates photo references in the text against the memory cache.
+        Checks for:
+        - Malformed references
+        - Incorrect hash length
+        - Invalid or ambiguous hashes
+        Returns a list of unique photos (no duplicates even if referenced multiple times).
         """
         text = self.text_entry.text
-        pattern = r"\[\[photo::(\w{8})\]\]"
-        short_hashes_in_text = set(re.findall(pattern, text))
+        
+        # First check for malformed references
+        malformed_pattern = r"\[\[photo::([^\]]*)\](?!\])"  # Missing ] at the end
+        malformed_matches = re.findall(malformed_pattern, text)
+        if malformed_matches:
+            for match in malformed_matches:
+                self.notify(f"❌ Malformed reference: '\\[\\[photo::{match}\\]' - Missing closing '\\]'", severity="error", timeout=10)
+            return None
+
+        # Look for incorrect format references
+        invalid_format = r"\[\[photo:[^:\]]+\]\]"  # [[photo:something]] without ::
+        invalid_matches = re.findall(invalid_format, text)
+        if invalid_matches:
+            for match in invalid_matches:
+                escaped_match = match.replace("[", "\\[").replace("]", "\\]")
+                self.notify(f"❌ Invalid format: '{escaped_match}' - Use '\\[\\[photo::hash\\]\\]'", severity="error", timeout=10)
+            return None
+
+        # Now look for all references to validate
+        pattern = r"\[\[photo::([^\]]+)\]\]"
+        # Use set to get unique references only
+        all_refs = set(re.findall(pattern, text))
+        
+        if not all_refs:
+            return []  # No references, valid operation
+
         self._load_photos_for_diary(self.diary_id)
-        if not short_hashes_in_text:
-            return []  # Nenhuma referência, operação válida.
-
         linked_photos: List[Photo] = []
-        for short_hash in short_hashes_in_text:
-            found_photos = [p for p in self.cached_photos if p.photo_hash.startswith(short_hash)]
+        processed_hashes = set()  # Keep track of processed hashes to avoid duplicates
 
-            if len(found_photos) == 1:
-                linked_photos.append(found_photos[0])
+        for ref in all_refs:
+            # Skip if we already processed this hash
+            if ref in processed_hashes:
+                continue
+
+            # Validate hash length
+            if len(ref) != 8:
+                self.notify(
+                    f"❌ Invalid hash: '{ref}' - Must be exactly 8 characters long",
+                    severity="error",
+                    timeout=10
+                )
+                return None
+
+            # Validate if contains only valid hexadecimal characters
+            if not re.match(r"^[0-9A-Fa-f]{8}$", ref):
+                self.notify(
+                    f"❌ Invalid hash: '{ref}' - Use only hexadecimal characters (0-9, A-F)",
+                    severity="error",
+                    timeout=10
+                )
+                return None
+
+            # Search for photos matching the hash
+            found_photos = [p for p in self.cached_photos if p.photo_hash.startswith(ref)]
+
+            if len(found_photos) == 0:
+                self.notify(
+                    f"❌ Hash not found: '{ref}' - No photo matches this hash",
+                    severity="error",
+                    timeout=10
+                )
+                return None
+            elif len(found_photos) > 1:
+                self.notify(
+                    f"❌ Ambiguous hash: '{ref}' - Matches multiple photos",
+                    severity="error",
+                    timeout=10
+                )
+                return None
             else:
-                self.notify(f"❌ Error: the reference: '\[{short_hash}\\]' is not valid or ambiguous", severity="error", timeout=10)
-                return None  # Aborta a operação
+                linked_photos.append(found_photos[0])
+                processed_hashes.add(ref)  # Mark this hash as processed
 
-        return linked_photos
+        # Convert list to set and back to list to ensure uniqueness of photos
+        return list(set(linked_photos))
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         """Handles photo selection in the sidebar"""
