@@ -655,7 +655,7 @@ class EditEntryScreen(Screen):
             if len(found_photos) == 1:
                 linked_photos.append(found_photos[0])
             else:
-                self.notify(f"❌ Erro: Referência '\[{short_hash}\\]' é inválida ou ambígua!", severity="error", timeout=10)
+                self.notify(f"❌ Error: the reference: '\[{short_hash}\\]' is not valid or ambiguous", severity="error", timeout=10)
                 return None  # Aborta a operação
 
         return linked_photos
@@ -836,7 +836,7 @@ class EditEntryScreen(Screen):
         photos_to_link = self._get_linked_photos_from_text()
 
         if photos_to_link is None:
-            self.notify("⚠️ Salvamento cancelado. Corrija as referências de fotos.", severity="error")
+            self.notify("⚠️ Saving was canceled ", severity="error")
             return
 
         content = self.text_entry.text.strip()
@@ -883,12 +883,12 @@ class EditEntryScreen(Screen):
                 self.next_entry_id = max(entry.id for entry in self.entries) + 1
 
                 self._update_entry_display()
-                self.notify(f"✅ Nova entrada '{new_entry.title}' salva com sucesso!")
+                self.notify(f"✅ New Entry: '{new_entry.title}' Successfully saved")
             else:
-                self.notify("❌ Erro ao criar entrada")
+                self.notify("❌ Error creating the Entry")
 
         except Exception as e:
-            self.notify(f"❌ Erro ao criar entrada: {str(e)}")
+            self.notify(f"❌ Error creating the entry: {str(e)}")
 
     async def _async_update_entry(self, updated_content: str, photos_to_link: List[Photo]):
         """Atualiza uma entrada existente e sua associação de fotos."""
@@ -896,7 +896,7 @@ class EditEntryScreen(Screen):
 
         try:
             if not self.entries:
-                self.notify("Nenhuma entrada para atualizar")
+                self.notify("No Entry to update")
                 return
             entry_service = service_manager.get_entry_service()
             current_entry = self.entries[self.current_entry_index]
@@ -914,31 +914,31 @@ class EditEntryScreen(Screen):
             self.has_unsaved_changes = False
             self._original_content = updated_content  # Pode ser o texto com hashes curtos
             self._update_sub_header()
-            self.notify(f"✅ Entrada '{current_entry.title}' salva com sucesso!")
+            self.notify(f"✅ Entry: '{current_entry.title}' sucesfully saved")
 
         except Exception as e:
            # Desfaz as mudanças em caso de erro
-            self.notify(f"❌ Erro ao atualizar entrada: {str(e)}")
+            self.notify(f"❌ Error on updating the entry:: {str(e)}")
 
     def on_key(self, event):
-        print("DEBUG: on_key called with", event.key, "sidebar_focused:", self.sidebar_focused, "sidebar_visible:", self.sidebar_visible)
+
         # Sidebar contextual shortcuts
         if self.sidebar_focused and self.sidebar_visible:
-            print("DEBUG: Processing sidebar shortcut for key:", event.key)
+
             if event.key == "i":
-                print("DEBUG: Calling action_insert_photo")
+
                 self.action_insert_photo()
                 event.stop()
             elif event.key == "n":
-                print("DEBUG: Calling action_ingest_new_photo")
+
                 self.action_ingest_new_photo()
                 event.stop()
             elif event.key == "d":
-                print("DEBUG: Calling action_delete_photo")
+
                 self.action_delete_photo()
                 event.stop()
             elif event.key == "e":
-                print("DEBUG: Calling action_edit_photo")
+
                 self.action_edit_photo()
                 event.stop()
         # Shift+Tab: remove indent
