@@ -1,25 +1,20 @@
-from typing import Optional, List
-import asyncio
+import re
 from datetime import datetime
 from pathlib import Path
-import hashlib
-import re
-import time
-
-from textual.app import ComposeResult
-from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, TextArea, OptionList, Input, Button
-from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
+from typing import Optional, List
 
 from pilgrim.models.entry import Entry
-from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.models.photo import Photo
+from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.ui.screens.modals.add_photo_modal import AddPhotoModal
-from pilgrim.ui.screens.modals.edit_photo_modal import EditPhotoModal
 from pilgrim.ui.screens.modals.confirm_delete_modal import ConfirmDeleteModal
+from pilgrim.ui.screens.modals.edit_photo_modal import EditPhotoModal
 from pilgrim.ui.screens.modals.file_picker_modal import FilePickerModal
 from pilgrim.ui.screens.rename_entry_modal import RenameEntryModal
+from textual.app import ComposeResult
+from textual.containers import Container, Horizontal, Vertical
+from textual.screen import Screen
+from textual.widgets import Header, Footer, Static, TextArea, OptionList
 
 
 class EditEntryScreen(Screen):
@@ -333,9 +328,11 @@ class EditEntryScreen(Screen):
             all_photos = photo_service.read_all()
             self.cached_photos = [photo for photo in all_photos if photo.fk_travel_diary_id == diary_id]
             self.cached_photos.sort(key=lambda x: x.id)
+            return self.cached_photos
 
         except Exception as e:
             self.notify(f"Error loading photos: {str(e)}")
+            return []
 
 
     def action_toggle_sidebar(self):
