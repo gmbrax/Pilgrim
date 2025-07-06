@@ -1,4 +1,5 @@
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
 from textual.widgets import Label, Input, Button
@@ -6,7 +7,7 @@ from textual.widgets import Label, Input, Button
 
 class EditDiaryModal(ModalScreen[tuple[int,str]]):
     BINDINGS = [
-        ("escape", "cancel", "Cancel"),
+        Binding("escape", "cancel", "Cancel"),
     ]
 
     def __init__(self, diary_id: int):
