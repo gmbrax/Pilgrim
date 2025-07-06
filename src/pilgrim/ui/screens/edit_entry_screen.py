@@ -910,13 +910,11 @@ class EditEntryScreen(Screen):
             self.call_later(self._async_update_entry, content, photos_to_link)
 
     async def _async_create_entry(self, content: str, photos_to_link: List[Photo]):
-        """Cria uma nova entrada e associa as fotos referenciadas."""
-        service_manager = self.app.service_manager
-        db_session = service_manager.get_db_session()
+        """Creates a new entry and links the referenced photos."""
         try:
+            service_manager = self.app.service_manager
             entry_service = service_manager.get_entry_service()
 
-            # O service.create deve criar o objeto em memória, mas NÃO fazer o commit ainda.
             new_entry = entry_service.create(
                 travel_diary_id=self.diary_id,
                 title=self.new_entry_title,
@@ -926,7 +924,6 @@ class EditEntryScreen(Screen):
             )
 
             if new_entry:
-               # A partir daqui, é só atualizar a UI como você já fazia
                 self.entries.append(new_entry)
                 self.entries.sort(key=lambda x: x.id)
 
@@ -937,47 +934,51 @@ class EditEntryScreen(Screen):
 
                 self.is_new_entry = False
                 self.has_unsaved_changes = False
-                self._original_content = new_entry.text  # Pode ser o texto com hashes curtos
+                self._original_content = new_entry.text
                 self.new_entry_title = "New Entry"
                 self.next_entry_id = max(entry.id for entry in self.entries) + 1
 
                 self._update_entry_display()
-                self.notify(f"✅ New Entry: '{new_entry.title}' Successfully saved")
+                self.notify(f"Entry '{new_entry.title}' saved successfully!")
             else:
-                self.notify("❌ Error creating the Entry")
+                self.notify("Error creating entry")
 
         except Exception as e:
-            self.notify(f"❌ Error creating the entry: {str(e)}")
+            self.notify(f"Error creating entry: {str(e)}")
 
     async def _async_update_entry(self, updated_content: str, photos_to_link: List[Photo]):
-        """Atualiza uma entrada existente e sua associação de fotos."""
-        service_manager = self.app.service_manager
-
+        """Updates an existing entry and its photo links."""
         try:
             if not self.entries:
-                self.notify("No Entry to update")
+                self.notify("No entry to update")
                 return
+
+            service_manager = self.app.service_manager
             entry_service = service_manager.get_entry_service()
             current_entry = self.entries[self.current_entry_index]
-            entry_result : Entry = Entry(
+
+            entry_result = Entry(
+                id=current_entry.id,
                 title=current_entry.title,
                 text=updated_content,
                 photos=photos_to_link,
                 date=current_entry.date,
-                travel_diary_id=self.diary_id
-
+                travel_diary_id=self.diary_id,
+                fk_travel_diary_id=self.diary_id
             )
-            entry_service.update(current_entry, entry_result)
 
-            # A partir daqui, é só atualizar a UI
-            self.has_unsaved_changes = False
-            self._original_content = updated_content  # Pode ser o texto com hashes curtos
-            self._update_sub_header()
-            self.notify(f"✅ Entry: '{current_entry.title}' sucesfully saved")
+            result = entry_service.update(current_entry, entry_result)
+
+            if result:
+                self.has_unsaved_changes = False
+                self._original_content = updated_content
+                self._update_sub_header()
+                self.notify(f"Entry '{current_entry.title}' saved successfully!")
+            else:
+                self.notify("Error updating entry")
 
         except Exception as e:
-           # Desfaz as mudanças em caso de erro
-            self.notify(f"❌ Error on updating the entry:: {str(e)}")
+            self.notify(f"Error updating entry: {str(e)}")
 
     def on_key(self, event):
 
