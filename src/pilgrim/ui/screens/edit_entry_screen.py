@@ -12,6 +12,7 @@ from pilgrim.ui.screens.modals.edit_photo_modal import EditPhotoModal
 from pilgrim.ui.screens.modals.file_picker_modal import FilePickerModal
 from pilgrim.ui.screens.rename_entry_modal import RenameEntryModal
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, TextArea, OptionList
@@ -21,15 +22,15 @@ class EditEntryScreen(Screen):
     TITLE = "Pilgrim - Edit"
 
     BINDINGS = [
-        ("ctrl+q", "quit", "Quit"),
-        ("ctrl+s", "save", "Save"),
-        ("ctrl+n", "new_entry", "New Entry"),
-        ("ctrl+shift+n", "next_entry", "Next Entry"),
-        ("ctrl+shift+p", "prev_entry", "Previous Entry"),
-        ("ctrl+r", "rename_entry", "Rename Entry"),
-        ("f8", "toggle_sidebar", "Toggle Photos"),
-        ("f9", "toggle_focus", "Toggle Focus"),
-        ("escape", "back_to_list", "Back to List"),
+        Binding("ctrl+q", "quit", "Quit"),
+        Binding("ctrl+s", "save", "Save"),
+        Binding("ctrl+n", "new_entry", "New Entry"),
+        Binding("ctrl+shift+n", "next_entry", "Next Entry"),
+        Binding("ctrl+shift+p", "prev_entry", "Previous Entry"),
+        Binding("ctrl+r", "rename_entry", "Rename Entry"),
+        Binding("f8", "toggle_sidebar", "Toggle Photos"),
+        Binding("f9", "toggle_focus", "Toggle Focus"),
+        Binding("escape", "back_to_list", "Back to List"),
     ]
 
     def __init__(self, diary_id: int = 1):
