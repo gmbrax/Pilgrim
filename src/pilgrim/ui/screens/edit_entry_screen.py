@@ -329,9 +329,11 @@ class EditEntryScreen(Screen):
             all_photos = photo_service.read_all()
             self.cached_photos = [photo for photo in all_photos if photo.fk_travel_diary_id == diary_id]
             self.cached_photos.sort(key=lambda x: x.id)
+            return self.cached_photos
 
         except Exception as e:
             self.notify(f"Error loading photos: {str(e)}")
+            return []
 
 
     def action_toggle_sidebar(self):
