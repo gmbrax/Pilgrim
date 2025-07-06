@@ -1,4 +1,5 @@
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
 from textual.widgets import Label, Input, Button
@@ -8,7 +9,7 @@ class RenameEntryModal(ModalScreen[str]):
     """A modal screen to rename a diary entry."""
 
     BINDINGS = [
-        ("escape", "cancel", "Cancel"),
+        Binding("escape", "cancel", "Cancel"),
     ]
 
     def __init__(self, current_name: str):
