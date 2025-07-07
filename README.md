@@ -1,16 +1,17 @@
-# Python_Pilgrim
+# Pilgrim
 
 ## Overview
 
-**Python_Pilgrim** is a Python-based travel diary application designed to help users document and manage their travel experiences. The project provides tools for recording trips, organizing travel notes, and storing memories in a structured and accessible format.
+**Pilgrim** is a Python-based travel diary application designed to help users document and manage their travel
+experiences. The project provides tools for recording trips, organizing travel notes, and storing memories in a
+structured and accessible format.
 
 ## Features
 
 - Create and manage travel diaries
 - Add, edit, and delete travel entries
 - Organize trips by date, location, or theme
-- Store photos, notes, and other media
-- Export and share travel logs
+- Store photos and add them to the diary entry
 
 ## Requirements
 - Python 3.8 or higher
@@ -21,30 +22,25 @@
 
 ## Installation
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/gmbrax/Pilgrim.git
-    ```
-2. Navigate to the project directory:
-    ```bash
-    cd Pilgrim
-    ```
-3. Create a virtual environment and, then, activate it:
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    ```
-4. Install the required dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+To install the application you must issue the command:
+
+```bash
+pip install pilgrim
+```
 
 ## Usage
 
-To run the main application, execute:
-
-```bash
-python <???>.py
+To use application you just issue:
+```bash 
+pilgrim
 ```
 
-This will start the Python_Pilgrim application. Follow the on-screen instructions to create and manage your travel diaries.
+This will start the Pilgrim application. Follow the on-screen instructions to create and manage your travel diaries.
+
+## Changelog
+
+To see all the changes in the current version, please refer to the [CHANGELOG](CHANGELOG.md)
+
+## License
+
+This project is licensed under the BSD 3-Clause License — see the [LICENSE](LICENSE) file for details.
