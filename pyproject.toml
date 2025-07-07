@@ -1,33 +1,33 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+    [build-system]
+    requires = ["hatchling"]
+    build-backend = "hatchling.build"
 
 
-[project]
-name = "Pilgrim"
-version = "0.0.1"
-authors = [
-  { name="Gustavo Henrique Santos Souza de Miranda", email="gustavohssmiranda@gmail.com" }
-]
-description = "Pilgrim's Travel Log"
-readme = "README.md"
-requires-python = ">=3.10"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-dependencies = [
-  "sqlalchemy",
-    "textual",
-    "textual-dev"
-]
-[template.plugins.default]
-src-layout = true
-[project.urls]
-Homepage = "https://git.gustavomiranda.xyz/GHMiranda/Pilgrim"
-Issues = "https://git.gustavomiranda.xyz/GHMiranda/Pilgrim"
-[tool.hatch.build.targets.wheel]
-packages = ["src/pilgrim"]
-[project.scripts]
-pilgrim = "pilgrim:main"
+    [project]
+    name = "Pilgrim"
+    version = "0.0.1"
+    authors = [
+      { name="Gustavo Henrique Santos Souza de Miranda", email="gustavohssmiranda@gmail.com" }
+    ]
+    description = "Pilgrim's Travel Log"
+    readme = "README.md"
+    requires-python = ">=3.10"
+    classifiers = [
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: OS Independent",
+    ]
+    dependencies = [
+      "sqlalchemy",
+        "textual",
+
+    ]
+    [template.plugins.default]
+    src-layout = true
+    [project.urls]
+    Homepage = "https://github.com/gmbrax/Pilgrim/"
+    Issues = "https://github.com/gmbrax/Pilgrim/issues"
+    [tool.hatch.build.targets.wheel]
+    packages = ["src/pilgrim"]
+    [project.scripts]
+    pilgrim = "pilgrim:main"
