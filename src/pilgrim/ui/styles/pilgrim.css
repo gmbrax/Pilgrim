@@ -1,0 +1,629 @@
+Screen {
+    layout: vertical;
+    background: $surface-darken-1;
+    align: center middle;
+}
+
+.EditEntryScreen-sub-header {
+    layout: horizontal;
+    background: $primary-darken-1;
+    height: 1;
+    padding: 0 1;
+    align: center middle;
+    width: 100%;
+}
+
+.EditEntryScreen-diary-info {
+    width: auto;
+    color: $text-muted;
+    margin-right: 2;
+}
+
+.EditEntryScreen-entry-info {
+    width: auto;
+    color: $text;
+    margin-right: 1;
+}
+
+.EditEntryScreen-spacer {
+    width: 1fr;
+}
+
+.EditEntryScreen-status-indicator {
+    width: auto;
+    padding: 0 1;
+    content-align: center middle;
+}
+
+.EditEntryScreen-status-indicator.saved {
+    background: #2E8B57; /* SeaGreen */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.not-saved {
+    background: #B22222; /* FireBrick */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.new {
+    background: #4682B4; /* SteelBlue */
+    color: $text;
+}
+
+.EditEntryScreen-status-indicator.read-only {
+    background: #696969; /* DimGray */
+    color: $text-muted;
+}
+
+.EditEntryScreen-main-container {
+    background: bisque;
+    margin: 0;
+}
+
+.EditEntryScreen-text-entry {
+    width: 100%;
+    height: 1fr;
+    border: none;
+}
+
+AboutScreen {
+    align: center middle;
+}
+
+#AboutScreen_AboutContainer {
+    align: center middle;
+    width: 85%;
+    height: 95%;
+    border: thick $primary;
+    background: $surface;
+    margin: 1;
+}
+
+#AboutScreen_AboutContainer TextArea {
+    align: center middle;
+    width: 100%;
+    height: 55%;
+    margin: 2;
+    padding: 1;
+}
+
+#AboutScreen_SubContainer {
+    align: center middle;
+    height: 45%;
+    padding: 1 1;
+    margin: 1 1;
+}
+
+#AboutScreen_AboutTitle {
+    color: $accent;
+    text-style: bold;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#AboutScreen_AboutVersion {
+    color: $warning;
+    text-style: italic;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#AboutScreen_AboutContent {
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#AboutScreen_AboutContact,
+#AboutScreen_AboutAuthor {
+    color: $text-muted;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#AboutScreen_AboutLicense {
+    height: 60%;
+}
+
+/* Main container - distributing vertical space */
+.DiaryListScreen-DiaryListContainer {
+    height: 1fr;
+    width: 100%;
+    layout: vertical;
+    align: center top; /* Aligns at the top to follow the wireframe */
+    padding: 2 4; /* More space on the sides */
+    background: $surface; /* Removing aquamarine to keep it cleaner */
+}
+
+/* Diary list - main area as in the wireframe */
+.DiaryListScreen-DiaryListOptions {
+    border: round $primary-lighten-2;
+    background: $surface;
+    width: 75%; /* Generous width as in the wireframe */
+    height: 60%; /* Occupies available space */
+    margin: 2 0; /* Vertical margin to separate from other elements */
+}
+
+.DiaryListScreen-DiaryListOptions:focus {
+    border: round $primary;
+}
+
+/* Button container - right below the list */
+.DiaryListScreen-ButtonsGrid {
+    layout: horizontal;
+    align: center middle;
+    width: 75%; /* Same width as the diary list */
+    height: 20%; /* Increasing height to fit button text */
+}
+
+/* Individual buttons - ensuring space for text */
+.DiaryListScreen-NewDiaryButton,
+.DiaryListScreen-EditDiaryButton,
+.DiaryListScreen-OpenDiaryButton {
+    margin: 0 1 1 0; /* Space between buttons */
+    height: 1fr;
+    width: 1fr;
+    border: round grey;
+    text-align: center;
+    content-align: center middle;
+}
+
+/* Tips - using the correct class */
+.DiaryListScreen-DiaryListTips {
+    width: 100%; /* Full width when using dock */
+    height: auto;
+    text-style: italic;
+    text-align: center; /* Centers text within the element */
+    color: $text-muted;
+    dock: bottom; /* Sticks to the bottom of the screen */
+    margin: 0 1;
+}
+
+/* Generic styles that haven't changed */
+.option-list--option-highlighted {
+    background: $primary-darken-2;
+}
+
+.option-list--option-selected {
+    text-style: bold;
+    background: $primary;
+}
+
+Header {
+    background: $primary;
+    color: $text;
+}
+
+Footer {
+    background: $primary;
+    color: $text;
+}
+
+Screen.-modal {
+    background: rgba(0, 0, 0, 0.7); /* Darkens the background screen underneath */
+    align: center middle; /* Centers the content (your modal) that is in this modal screen */
+}
+
+/* Style for the new diary modal dialog */
+.NewDiaryModal-dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.NewDiaryModal-title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.NewDiaryModal-label {
+    margin-bottom: 1;
+}
+
+.NewDiaryModal-name-input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.NewDiaryModal-buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.NewDiaryModal-buttons Button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* Additional classes for NewDiaryModal */
+.NewDiaryModal-Dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.NewDiaryModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.NewDiaryModal-NameInput {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.NewDiaryModal-ButtonsContainer {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.NewDiaryModal-CreateDiaryButton,
+.NewDiaryModal-CancelButton {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* Style for the edit diary modal dialog */
+.EditDiaryModal-dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $warning;
+    padding: 2 4;
+    align: center middle;
+}
+
+.EditDiaryModal-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+.EditDiaryModal-label {
+    margin-bottom: 1;
+}
+
+.EditDiaryModal-name-input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.EditDiaryModal-buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.EditDiaryModal-buttons Button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* Additional classes for EditDiaryModal */
+.EditDiaryModal-Dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $warning;
+    padding: 2 4;
+    align: center middle;
+}
+
+.EditDiaryModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+.EditDiaryModal-NameInput {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.EditDiaryModal-ButtonsContainer {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.EditDiaryModal-SaveButton,
+.EditDiaryModal-CancelButton {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* Style for the rename entry modal dialog */
+.RenameEntryModal-dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.RenameEntryModal-title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+.RenameEntryModal-name-input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.RenameEntryModal-buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.RenameEntryModal-save-button,
+.RenameEntryModal-cancel-button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+.EditEntryScreen-sidebar {
+    width: 40;
+    min-height: 10;
+    border-left: solid green;
+    padding: 1;
+    background: $surface-darken-2;
+    color: $primary;
+    text-style: bold;
+    content-align: left top;
+}
+
+.EditEntryScreen-content-container {
+    layout: horizontal;
+    height: 1fr;
+}
+
+.EditEntryScreen-sidebar-title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    padding: 1;
+    border-bottom: solid $accent;
+    margin-bottom: 1;
+}
+
+.EditEntryScreen-sidebar-content {
+    height: 1fr;
+    layout: vertical;
+}
+
+.EditEntryScreen-sidebar-photo-list {
+    height: 1fr;
+    border: solid $accent;
+    margin-bottom: 1;
+}
+
+.EditEntryScreen-sidebar-photo-info {
+    height: auto;
+    min-height: 3;
+    border: solid $warning;
+    padding: 1;
+    margin-bottom: 1;
+    background: $surface-darken-1;
+}
+
+.EditEntryScreen-sidebar-help {
+    height: auto;
+    min-height: 8;
+    border: solid $success;
+    padding: 1;
+    background: $surface-darken-1;
+    text-style: italic;
+}
+
+/* Photo Modal Styles */
+.modal-dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.modal-title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.modal-label {
+    margin-bottom: 1;
+    color: $text;
+}
+
+.modal-input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+
+.modal-buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.modal-button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* AddPhotoModal styles */
+.AddPhotoModal-Dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+.AddPhotoModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+.AddPhotoModal-Label {
+    margin-bottom: 1;
+    color: $text;
+}
+.AddPhotoModal-Input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+.AddPhotoModal-Buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+.AddPhotoModal-Button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* EditPhotoModal styles */
+.EditPhotoModal-Dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+.EditPhotoModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+.EditPhotoModal-Label {
+    margin-bottom: 1;
+    color: $text;
+}
+.EditPhotoModal-Input {
+    width: 1fr;
+    margin-bottom: 2;
+}
+.EditPhotoModal-Buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+.EditPhotoModal-Button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* FilePickerModal styles */
+.FilePickerModal-Dialog {
+    layout: vertical;
+    width: 80%;
+    height: 80%;
+    background: $surface;
+    border: thick $accent;
+    padding: 2 4;
+    align: center middle;
+}
+
+.FilePickerModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.FilePickerModal-Buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+
+.FilePickerModal-Button {
+    margin: 0 1;
+    width: 1fr;
+}
+
+/* DirectoryTree specific styles */
+#directory-tree {
+    height: 1fr;
+    border: solid $accent;
+    margin: 1;
+}
+
+/* ConfirmDeleteModal styles */
+.ConfirmDeleteModal-Dialog {
+    layout: vertical;
+    width: 60%;
+    height: auto;
+    background: $surface;
+    border: thick $error;
+    padding: 2 4;
+    align: center middle;
+}
+.ConfirmDeleteModal-Title {
+    text-align: center;
+    text-style: bold;
+    color: $error;
+    margin-bottom: 1;
+}
+.ConfirmDeleteModal-Message {
+    text-align: center;
+    color: $text;
+    margin-bottom: 1;
+}
+.ConfirmDeleteModal-Warning {
+    text-align: center;
+    color: $warning;
+    text-style: italic;
+    margin-bottom: 2;
+}
+.ConfirmDeleteModal-Buttons {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+    padding-top: 1;
+}
+.ConfirmDeleteModal-Button {
+    margin: 0 1;
+    width: 1fr;
+}
