@@ -34,7 +34,6 @@ class EditEntryScreen(Screen):
     ]
 
     def __init__(self, diary_id: int = 1):
-        print("DEBUG: EditEntryScreen INIT")
         super().__init__()
         self.diary_id = diary_id
         self.diary_name = f"Diary {diary_id}"
@@ -136,7 +135,6 @@ class EditEntryScreen(Screen):
 
 
     def compose(self) -> ComposeResult:
-        print("DEBUG: EditEntryScreen COMPOSE", getattr(self, 'sidebar_visible', None))
         yield self.header
         yield Horizontal(
             self.main,
@@ -233,7 +231,10 @@ class EditEntryScreen(Screen):
             current_entry = self.entries[self.current_entry_index]
             entry_text = f"Entry: \\[{self.current_entry_index + 1}/{len(self.entries)}] {current_entry.title}"
             self.entry_info.update(entry_text)
-            self._update_status_indicator("Saved", "saved")
+            if self.has_unsaved_changes:
+                self._update_status_indicator("Not Saved", "not-saved")
+            else:
+                self._update_status_indicator("Saved", "saved")
 
     def _save_current_state(self):
         """Saves the current state before navigating"""
@@ -339,7 +340,6 @@ class EditEntryScreen(Screen):
     def action_toggle_sidebar(self):
         """Toggles the sidebar visibility"""
         try:
-            print("DEBUG: TOGGLE SIDEBAR", self.sidebar_visible)
             self.sidebar_visible = not self.sidebar_visible
 
             if self.sidebar_visible:
@@ -348,13 +348,7 @@ class EditEntryScreen(Screen):
                 # Automatically focus the sidebar when opening
                 self.sidebar_focused = True
                 self.photo_list.focus()
-                # Notification when opening the sidebar for the first time
-                if not self._sidebar_opened_once:
-                    self.notify(
-                        "Sidebar opened and focused! Use the shortcuts shown in the help panel.",
-                        severity="info"
-                    )
-                    self._sidebar_opened_once = True
+                self._sidebar_opened_once = True
             else:
                 self.sidebar.display = False
                 self.sidebar_focused = False  # Reset focus when hiding
@@ -372,15 +366,12 @@ class EditEntryScreen(Screen):
 
     def action_toggle_focus(self):
         """Toggles focus between editor and sidebar"""
-        print("DEBUG: TOGGLE FOCUS called", self.sidebar_visible, self.sidebar_focused)
         if not self.sidebar_visible:
             # If sidebar is not visible, show it and focus it
-            print("DEBUG: Sidebar not visible, opening it")
             self.action_toggle_sidebar()
             return
 
         self.sidebar_focused = not self.sidebar_focused
-        print("DEBUG: Sidebar focused changed to", self.sidebar_focused)
         if self.sidebar_focused:
             self.photo_list.focus()
         else:
@@ -757,24 +748,34 @@ class EditEntryScreen(Screen):
         self.photo_info.update(photo_details)
 
     def on_text_area_changed(self, event) -> None:
-        """Detects text changes and shows photo tooltips"""
-        if (hasattr(self, 'text_entry') and not self.text_entry.read_only and
-                not getattr(self, '_updating_display', False) and hasattr(self, '_original_content')):
-            current_content = self.text_entry.text
+        """Detects text changes and updates status"""
+        # Skip if we're currently updating the display
+        if getattr(self, '_updating_display', False):
+            return
+            
+        # Skip if text area is read-only
+        if not hasattr(self, 'text_entry') or self.text_entry.read_only:
+            return
+            
+        # Skip if we don't have original content to compare against
+        if not hasattr(self, '_original_content'):
+            return
+            
+        current_content = self.text_entry.text
+        
+        # Check if content has changed
+        if current_content != self._original_content:
+            if not self.has_unsaved_changes:
+                self.has_unsaved_changes = True
+                self._update_sub_header()
+        else:
+            if self.has_unsaved_changes:
+                self.has_unsaved_changes = False
+                self._update_sub_header()
 
 
 
-            # Check for a photo reference pattern
-            # self._check_photo_reference(current_content)  # Temporarily disabled
 
-            if current_content != self._original_content:
-                if not self.has_unsaved_changes:
-                    self.has_unsaved_changes = True
-                    self._update_sub_header()
-            else:
-                if self.has_unsaved_changes:
-                    self.has_unsaved_changes = False
-                    self._update_sub_header()
 
     def on_focus(self, event) -> None:
         """Captures focus changes to update footer"""
@@ -982,7 +983,6 @@ class EditEntryScreen(Screen):
             self.notify(f"Error updating entry: {str(e)}")
 
     def on_key(self, event):
-
         # Sidebar contextual shortcuts
         if self.sidebar_focused and self.sidebar_visible:
 
