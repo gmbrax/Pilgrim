@@ -1028,3 +1028,12 @@ class EditEntryScreen(Screen):
         elif self.focused is self.text_entry and event.key == "tab":
             self.text_entry.insert('\t')
             event.stop()
+
+    def on_footer_action(self, event) -> None:
+        """Handle clicks on footer actions (Textual 3.x)."""
+        action = event.action
+        method = getattr(self, f"action_{action}", None)
+        if method:
+            method()
+        else:
+            self.notify(f"No action found for: {action}", severity="warning")

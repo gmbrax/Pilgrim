@@ -5,7 +5,7 @@
 
     [project]
     name = "Pilgrim"
-    version = "0.0.1"
+    version = "0.0.3"
     authors = [
       { name="Gustavo Henrique Santos Souza de Miranda", email="gustavohssmiranda@gmail.com" }
     ]
