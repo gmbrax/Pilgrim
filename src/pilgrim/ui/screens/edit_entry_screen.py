@@ -33,17 +33,24 @@ class EditEntryScreen(Screen):
         Binding("escape", "back_to_list", "Back to List"),
     ]
 
-    def __init__(self, diary_id: int = 1):
+    def __init__(self, diary_id: int = 1,create_new: bool = True):
         super().__init__()
+
+        if create_new:
+            self.current_entry_index = -1
+            self.is_new_entry = True
+            self.next_entry_id = None
+
+        else:
+            self.is_new_entry = False
+            self.current_entry_index = 0
+            self.next_entry_id = 1
+        self.new_entry_title = ""
+        self.new_entry_content = ""
         self.diary_id = diary_id
         self.diary_name = f"Diary {diary_id}"
-        self.current_entry_index = 0
         self.entries: List[Entry] = []
-        self.is_new_entry = False
         self.has_unsaved_changes = False
-        self.new_entry_content = ""
-        self.new_entry_title = ""
-        self.next_entry_id = 1
         self._updating_display = False
         self._original_content = ""
         self.is_refreshing = False
