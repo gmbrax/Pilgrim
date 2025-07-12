@@ -913,10 +913,21 @@ class EditEntryScreen(Screen):
                 self.notify("Empty entry cannot be saved")
                 return
             # Passe a lista de fotos para o método de criação
-            self.call_later(self._async_create_entry, content, photos_to_link)
+            if self.new_entry_title == "":
+               self.app.push_screen(RenameEntryModal(current_name=""), lambda result: self._handle_save_after_rename(result,content,
+                                                                                               photos_to_link))
+            else:
+                self.call_later(self._async_create_entry, content, photos_to_link)
         else:
             # Passe a lista de fotos para o método de atualização
             self.call_later(self._async_update_entry, content, photos_to_link)
+
+    def _handle_save_after_rename(self, result: str | None, content: str, photos_to_link: List[Photo]) -> None:
+        if result is None:
+            self.notify("Save cancelled")
+            return
+        self.new_entry_title = result
+        self.call_later(self._async_create_entry, content, photos_to_link)
 
     async def _async_create_entry(self, content: str, photos_to_link: List[Photo]):
         """Creates a new entry and links the referenced photos."""
@@ -944,7 +955,7 @@ class EditEntryScreen(Screen):
                 self.is_new_entry = False
                 self.has_unsaved_changes = False
                 self._original_content = new_entry.text
-                self.new_entry_title = "New Entry"
+                self.new_entry_title = ""
                 self.next_entry_id = max(entry.id for entry in self.entries) + 1
 
                 self._update_entry_display()
