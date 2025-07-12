@@ -25,7 +25,7 @@ structured and accessible format.
 To install the application you must issue the command:
 
 ```bash
-pip install pilgrim
+ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple Pilgrim
 ```
 
 ## Usage
