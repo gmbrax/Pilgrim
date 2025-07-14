@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export features
 - Testing implementation
 
+## [0.0.3] - 2025-07-07
+
+### Changed
+- Removed the dependency on textual-dev from pyproject.toml
+
+## [0.0.2] - 2025-07-07
+
+### Changed
+- Changed the license in pyproject.toml to BSD
+
 ## [0.0.1] - 2025-07-06
 
 ### Added
@@ -34,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Installation Method 1 not yet implemented
 - No testing suite implemented yet
-- Some features may be unstable in alpha version
+- Some features may be unstable in an alpha version
 
 [Unreleased]: https://github.com/username/pilgrim/compare/v0.0.1...HEAD
 
