@@ -24,9 +24,9 @@ class EditEntryScreen(Screen):
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit"),
         Binding("ctrl+s", "save", "Save"),
-        Binding("ctrl+n", "new_entry", "New Entry"),
-        Binding("ctrl+shift+n", "next_entry", "Next Entry"),
-        Binding("ctrl+shift+p", "prev_entry", "Previous Entry"),
+        Binding("shift+f5", "new_entry", "New Entry"),
+        Binding("f5", "next_entry", "Next Entry"),
+        Binding("f4", "prev_entry", "Previous Entry"),
         Binding("ctrl+r", "rename_entry", "Rename Entry"),
         Binding("f8", "toggle_sidebar", "Toggle Photos"),
         Binding("f9", "toggle_focus", "Toggle Focus"),
@@ -1000,52 +1000,60 @@ class EditEntryScreen(Screen):
         except Exception as e:
             self.notify(f"Error updating entry: {str(e)}")
 
-    def on_key(self, event):
-        # Sidebar contextual shortcuts
+    def check_key(self, event):
+        """Check for custom key handling before bindings are processed"""
+
+        # Sidebar shortcuts
         if self.sidebar_focused and self.sidebar_visible:
+            sidebar_keys = ["i", "n", "d", "e"]
+            if event.key in sidebar_keys:
+                if event.key == "i":
+                    self.action_insert_photo()
+                elif event.key == "n":
+                    self.action_ingest_new_photo()
+                elif event.key == "d":
+                    self.action_delete_photo()
+                elif event.key == "e":
+                    self.action_edit_photo()
+                return True  # Indica que o evento foi processado
 
-            if event.key == "i":
+        # Text area shortcuts
+        elif self.focused is self.text_entry:
+            if event.key in ["tab", "shift+tab"]:
+                if event.key == "shift+tab":
+                    self._handle_shift_tab()
+                elif event.key == "tab":
+                    self.text_entry.insert('\t')
+                return True  # Indica que o evento foi processado
 
-                self.action_insert_photo()
-                event.stop()
-            elif event.key == "n":
+        return False  # Não foi processado, continuar com bindings
 
-                self.action_ingest_new_photo()
-                event.stop()
-            elif event.key == "d":
+    def _handle_shift_tab(self):
+        """Handle shift+tab for removing indentation"""
+        textarea = self.text_entry
+        row, col = textarea.cursor_location
+        lines = textarea.text.splitlines()
+        if row < len(lines):
+            line = lines[row]
+            if line.startswith('\t'):
+                lines[row] = line[1:]
+                textarea.text = '\n'.join(lines)
+                textarea.cursor_location = (row, max(col - 1, 0))
+            elif line.startswith('    '):  # 4 spaces
+                lines[row] = line[4:]
+                textarea.text = '\n'.join(lines)
+                textarea.cursor_location = (row, max(col - 4, 0))
+            elif line.startswith(' '):
+                n = len(line) - len(line.lstrip(' '))
+                to_remove = min(n, 4)
+                lines[row] = line[to_remove:]
+                textarea.text = '\n'.join(lines)
+                textarea.cursor_location = (row, max(col - to_remove, 0))
 
-                self.action_delete_photo()
-                event.stop()
-            elif event.key == "e":
-
-                self.action_edit_photo()
-                event.stop()
-        # Shift+Tab: remove indent
-        elif self.focused is self.text_entry and event.key == "shift+tab":
-            textarea = self.text_entry
-            row, col = textarea.cursor_location
-            lines = textarea.text.splitlines()
-            if row < len(lines):
-                line = lines[row]
-                if line.startswith('\t'):
-                    lines[row] = line[1:]
-                    textarea.text = '\n'.join(lines)
-                    textarea.cursor_location = (row, max(col - 1, 0))
-                elif line.startswith('    '):  # 4 spaces
-                    lines[row] = line[4:]
-                    textarea.text = '\n'.join(lines)
-                    textarea.cursor_location = (row, max(col - 4, 0))
-                elif line.startswith(' '):
-                    n = len(line) - len(line.lstrip(' '))
-                    to_remove = min(n, 4)
-                    lines[row] = line[to_remove:]
-                    textarea.text = '\n'.join(lines)
-                    textarea.cursor_location = (row, max(col - to_remove, 0))
+    def on_key(self, event):
+        if self.check_key(event):
             event.stop()
-        # Tab: insert tab
-        elif self.focused is self.text_entry and event.key == "tab":
-            self.text_entry.insert('\t')
-            event.stop()
+            return
 
     def on_footer_action(self, event) -> None:
         """Handle clicks on footer actions (Textual 3.x)."""
