@@ -8,6 +8,7 @@ from textual.widgets import Label, Input, Button
 class NewDiaryModal(ModalScreen[str]):
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
+        Binding("enter", "create_diary", "Create",priority=True),
     ]
     def __init__(self):
         super().__init__()
@@ -31,15 +32,23 @@ class NewDiaryModal(ModalScreen[str]):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handles button clicks."""
         if event.button.id == "create_diary_button":
-            diary_name = self.name_input.value.strip()
-            if diary_name:
-                self.dismiss(diary_name)
-            else:
-                self.notify("Diary name cannot be empty.", severity="warning")
-                self.name_input.focus()
+            self.action_create_diary()
         elif event.button.id == "cancel_button":
             self.dismiss("")
 
     def action_cancel(self) -> None:
         """Action to cancel the modal."""
         self.dismiss("")
+
+    def action_create_diary(self) -> None:
+        diary_name = self.name_input.value.strip()
+        if diary_name:
+            self.dismiss(diary_name)
+        else:
+            self.notify("Diary name cannot be empty.", severity="warning")
+            self.name_input.focus()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "NewDiaryModal-NameInput":
+            self.action_create_diary()
+
