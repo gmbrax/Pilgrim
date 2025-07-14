@@ -24,27 +24,33 @@ class EditEntryScreen(Screen):
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit"),
         Binding("ctrl+s", "save", "Save"),
-        Binding("ctrl+n", "new_entry", "New Entry"),
-        Binding("ctrl+shift+n", "next_entry", "Next Entry"),
-        Binding("ctrl+shift+p", "prev_entry", "Previous Entry"),
+        Binding("shift+f5", "new_entry", "New Entry"),
+        Binding("f5", "next_entry", "Next Entry"),
+        Binding("f4", "prev_entry", "Previous Entry"),
         Binding("ctrl+r", "rename_entry", "Rename Entry"),
         Binding("f8", "toggle_sidebar", "Toggle Photos"),
         Binding("f9", "toggle_focus", "Toggle Focus"),
         Binding("escape", "back_to_list", "Back to List"),
     ]
 
-    def __init__(self, diary_id: int = 1):
-        print("DEBUG: EditEntryScreen INIT")
+    def __init__(self, diary_id: int = 1,create_new: bool = True):
         super().__init__()
+
+        if create_new:
+            self.current_entry_index = -1
+            self.is_new_entry = True
+            self.next_entry_id = None
+
+        else:
+            self.is_new_entry = False
+            self.current_entry_index = 0
+            self.next_entry_id = 1
+        self.new_entry_title = ""
+        self.new_entry_content = ""
         self.diary_id = diary_id
         self.diary_name = f"Diary {diary_id}"
-        self.current_entry_index = 0
         self.entries: List[Entry] = []
-        self.is_new_entry = False
         self.has_unsaved_changes = False
-        self.new_entry_content = ""
-        self.new_entry_title = "New Entry"
-        self.next_entry_id = 1
         self._updating_display = False
         self._original_content = ""
         self.is_refreshing = False
@@ -136,7 +142,6 @@ class EditEntryScreen(Screen):
 
 
     def compose(self) -> ComposeResult:
-        print("DEBUG: EditEntryScreen COMPOSE", getattr(self, 'sidebar_visible', None))
         yield self.header
         yield Horizontal(
             self.main,
@@ -233,7 +238,10 @@ class EditEntryScreen(Screen):
             current_entry = self.entries[self.current_entry_index]
             entry_text = f"Entry: \\[{self.current_entry_index + 1}/{len(self.entries)}] {current_entry.title}"
             self.entry_info.update(entry_text)
-            self._update_status_indicator("Saved", "saved")
+            if self.has_unsaved_changes:
+                self._update_status_indicator("Not Saved", "not-saved")
+            else:
+                self._update_status_indicator("Saved", "saved")
 
     def _save_current_state(self):
         """Saves the current state before navigating"""
@@ -339,7 +347,6 @@ class EditEntryScreen(Screen):
     def action_toggle_sidebar(self):
         """Toggles the sidebar visibility"""
         try:
-            print("DEBUG: TOGGLE SIDEBAR", self.sidebar_visible)
             self.sidebar_visible = not self.sidebar_visible
 
             if self.sidebar_visible:
@@ -348,13 +355,7 @@ class EditEntryScreen(Screen):
                 # Automatically focus the sidebar when opening
                 self.sidebar_focused = True
                 self.photo_list.focus()
-                # Notification when opening the sidebar for the first time
-                if not self._sidebar_opened_once:
-                    self.notify(
-                        "Sidebar opened and focused! Use the shortcuts shown in the help panel.",
-                        severity="info"
-                    )
-                    self._sidebar_opened_once = True
+                self._sidebar_opened_once = True
             else:
                 self.sidebar.display = False
                 self.sidebar_focused = False  # Reset focus when hiding
@@ -372,15 +373,12 @@ class EditEntryScreen(Screen):
 
     def action_toggle_focus(self):
         """Toggles focus between editor and sidebar"""
-        print("DEBUG: TOGGLE FOCUS called", self.sidebar_visible, self.sidebar_focused)
         if not self.sidebar_visible:
             # If sidebar is not visible, show it and focus it
-            print("DEBUG: Sidebar not visible, opening it")
             self.action_toggle_sidebar()
             return
 
         self.sidebar_focused = not self.sidebar_focused
-        print("DEBUG: Sidebar focused changed to", self.sidebar_focused)
         if self.sidebar_focused:
             self.photo_list.focus()
         else:
@@ -757,24 +755,34 @@ class EditEntryScreen(Screen):
         self.photo_info.update(photo_details)
 
     def on_text_area_changed(self, event) -> None:
-        """Detects text changes and shows photo tooltips"""
-        if (hasattr(self, 'text_entry') and not self.text_entry.read_only and
-                not getattr(self, '_updating_display', False) and hasattr(self, '_original_content')):
-            current_content = self.text_entry.text
+        """Detects text changes and updates status"""
+        # Skip if we're currently updating the display
+        if getattr(self, '_updating_display', False):
+            return
+            
+        # Skip if text area is read-only
+        if not hasattr(self, 'text_entry') or self.text_entry.read_only:
+            return
+            
+        # Skip if we don't have original content to compare against
+        if not hasattr(self, '_original_content'):
+            return
+            
+        current_content = self.text_entry.text
+        
+        # Check if content has changed
+        if current_content != self._original_content:
+            if not self.has_unsaved_changes:
+                self.has_unsaved_changes = True
+                self._update_sub_header()
+        else:
+            if self.has_unsaved_changes:
+                self.has_unsaved_changes = False
+                self._update_sub_header()
 
 
 
-            # Check for a photo reference pattern
-            # self._check_photo_reference(current_content)  # Temporarily disabled
 
-            if current_content != self._original_content:
-                if not self.has_unsaved_changes:
-                    self.has_unsaved_changes = True
-                    self._update_sub_header()
-            else:
-                if self.has_unsaved_changes:
-                    self.has_unsaved_changes = False
-                    self._update_sub_header()
 
     def on_focus(self, event) -> None:
         """Captures focus changes to update footer"""
@@ -905,10 +913,21 @@ class EditEntryScreen(Screen):
                 self.notify("Empty entry cannot be saved")
                 return
             # Passe a lista de fotos para o método de criação
-            self.call_later(self._async_create_entry, content, photos_to_link)
+            if self.new_entry_title == "":
+               self.app.push_screen(RenameEntryModal(current_name=""), lambda result: self._handle_save_after_rename(result,content,
+                                                                                               photos_to_link))
+            else:
+                self.call_later(self._async_create_entry, content, photos_to_link)
         else:
             # Passe a lista de fotos para o método de atualização
             self.call_later(self._async_update_entry, content, photos_to_link)
+
+    def _handle_save_after_rename(self, result: str | None, content: str, photos_to_link: List[Photo]) -> None:
+        if result is None:
+            self.notify("Save cancelled")
+            return
+        self.new_entry_title = result
+        self.call_later(self._async_create_entry, content, photos_to_link)
 
     async def _async_create_entry(self, content: str, photos_to_link: List[Photo]):
         """Creates a new entry and links the referenced photos."""
@@ -936,7 +955,7 @@ class EditEntryScreen(Screen):
                 self.is_new_entry = False
                 self.has_unsaved_changes = False
                 self._original_content = new_entry.text
-                self.new_entry_title = "New Entry"
+                self.new_entry_title = ""
                 self.next_entry_id = max(entry.id for entry in self.entries) + 1
 
                 self._update_entry_display()
@@ -981,50 +1000,66 @@ class EditEntryScreen(Screen):
         except Exception as e:
             self.notify(f"Error updating entry: {str(e)}")
 
-    def on_key(self, event):
+    def check_key(self, event):
+        """Check for custom key handling before bindings are processed"""
 
-        # Sidebar contextual shortcuts
+        # Sidebar shortcuts
         if self.sidebar_focused and self.sidebar_visible:
+            sidebar_keys = ["i", "n", "d", "e"]
+            if event.key in sidebar_keys:
+                if event.key == "i":
+                    self.action_insert_photo()
+                elif event.key == "n":
+                    self.action_ingest_new_photo()
+                elif event.key == "d":
+                    self.action_delete_photo()
+                elif event.key == "e":
+                    self.action_edit_photo()
+                return True  # Indica que o evento foi processado
 
-            if event.key == "i":
+        # Text area shortcuts
+        elif self.focused is self.text_entry:
+            if event.key in ["tab", "shift+tab"]:
+                if event.key == "shift+tab":
+                    self._handle_shift_tab()
+                elif event.key == "tab":
+                    self.text_entry.insert('\t')
+                return True  # Indica que o evento foi processado
 
-                self.action_insert_photo()
-                event.stop()
-            elif event.key == "n":
+        return False  # Não foi processado, continuar com bindings
 
-                self.action_ingest_new_photo()
-                event.stop()
-            elif event.key == "d":
+    def _handle_shift_tab(self):
+        """Handle shift+tab for removing indentation"""
+        textarea = self.text_entry
+        row, col = textarea.cursor_location
+        lines = textarea.text.splitlines()
+        if row < len(lines):
+            line = lines[row]
+            if line.startswith('\t'):
+                lines[row] = line[1:]
+                textarea.text = '\n'.join(lines)
+                textarea.cursor_location = (row, max(col - 1, 0))
+            elif line.startswith('    '):  # 4 spaces
+                lines[row] = line[4:]
+                textarea.text = '\n'.join(lines)
+                textarea.cursor_location = (row, max(col - 4, 0))
+            elif line.startswith(' '):
+                n = len(line) - len(line.lstrip(' '))
+                to_remove = min(n, 4)
+                lines[row] = line[to_remove:]
+                textarea.text = '\n'.join(lines)
+                textarea.cursor_location = (row, max(col - to_remove, 0))
 
-                self.action_delete_photo()
-                event.stop()
-            elif event.key == "e":
-
-                self.action_edit_photo()
-                event.stop()
-        # Shift+Tab: remove indent
-        elif self.focused is self.text_entry and event.key == "shift+tab":
-            textarea = self.text_entry
-            row, col = textarea.cursor_location
-            lines = textarea.text.splitlines()
-            if row < len(lines):
-                line = lines[row]
-                if line.startswith('\t'):
-                    lines[row] = line[1:]
-                    textarea.text = '\n'.join(lines)
-                    textarea.cursor_location = (row, max(col - 1, 0))
-                elif line.startswith('    '):  # 4 spaces
-                    lines[row] = line[4:]
-                    textarea.text = '\n'.join(lines)
-                    textarea.cursor_location = (row, max(col - 4, 0))
-                elif line.startswith(' '):
-                    n = len(line) - len(line.lstrip(' '))
-                    to_remove = min(n, 4)
-                    lines[row] = line[to_remove:]
-                    textarea.text = '\n'.join(lines)
-                    textarea.cursor_location = (row, max(col - to_remove, 0))
+    def on_key(self, event):
+        if self.check_key(event):
             event.stop()
-        # Tab: insert tab
-        elif self.focused is self.text_entry and event.key == "tab":
-            self.text_entry.insert('\t')
-            event.stop()
+            return
+
+    def on_footer_action(self, event) -> None:
+        """Handle clicks on footer actions (Textual 3.x)."""
+        action = event.action
+        method = getattr(self, f"action_{action}", None)
+        if method:
+            method()
+        else:
+            self.notify(f"No action found for: {action}", severity="warning")
