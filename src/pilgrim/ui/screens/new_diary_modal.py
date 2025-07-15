@@ -46,7 +46,9 @@ class NewDiaryModal(ModalScreen[str]):
     def action_create_diary(self) -> None:
         diary_name = self.name_input.value.strip()
         if diary_name:
+
             self.call_later(self._async_create_diary, diary_name)
+
         else:
             self.notify("Diary name cannot be empty.", severity="warning")
             self.name_input.focus()
@@ -71,6 +73,7 @@ class NewDiaryModal(ModalScreen[str]):
                 self.notify("Error Creating the diary")
         except Exception as e:
             self.notify(f"Exception on creating the diary: {str(e)}")
+
 
 
 
