@@ -62,7 +62,10 @@ class NewDiaryModal(ModalScreen[str]):
             created_diary = await service.async_create(name)
             if created_diary:
                 self.dismiss(name)
-                self.app.push_screen(EditEntryScreen(diary_id=created_diary.id))
+
+                if self.auto_open:
+                    self.app.push_screen(EditEntryScreen(diary_id=created_diary.id))
+
                 self.notify(f"Diary: '{name}' created!")
             else:
                 self.notify("Error Creating the diary")
