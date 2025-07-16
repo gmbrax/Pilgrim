@@ -216,6 +216,7 @@ class DiaryListScreen(Screen):
             self.notify(f"Creation canceled...")
 
     def _on_screen_resume(self) -> None:
+        super()._on_screen_resume()
         self.refresh_diaries()
 
     def action_edit_selected_diary(self):
