@@ -1,4 +1,5 @@
 import os
+import shutil
 from pathlib import Path
 
 
@@ -37,3 +38,26 @@ class DirectoryManager:
     def get_diary_images_directory(directory_name: str) -> Path:
         """Returns the images directory path for a specific diary."""
         return DirectoryManager.get_diary_data_directory(directory_name) / "images"
+
+    @staticmethod
+    def get_database_path() -> Path:
+        """
+        Get the database file path following XDG Base Directory specification.
+        Creates the directory if it doesn't exist.
+        """
+
+        pilgrim_dir = DirectoryManager.get_config_directory()
+        pilgrim_dir.mkdir(exist_ok=True)
+
+        # Database file path
+        db_path = pilgrim_dir / "database.db"
+
+        # If database doesn't exist in new location but exists in current directory,
+        # migrate it
+        if not db_path.exists():
+            current_db = Path("database.db")
+            if current_db.exists():
+                shutil.copy2(current_db, db_path)
+                print(f"Database migrated from {current_db} to {db_path}")
+
+        return db_path
