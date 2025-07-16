@@ -13,12 +13,24 @@ class NewDiaryModal(ModalScreen[str]):
         Binding("enter", "create_diary", "Create",priority=True),
     ]
     def __init__(self,autoopen=True):
+        """
+        Initialize the NewDiaryModal with optional automatic opening of the created diary.
+        
+        Parameters:
+            autoopen (bool): If True, the newly created diary will open automatically after creation. Defaults to True.
+        """
         super().__init__()
         self.auto_open = autoopen
         self.name_input = Input(id="NewDiaryModal-NameInput",classes="NewDiaryModal-NameInput") # This ID is fine, it's specific to the input
 
     def compose(self) -> ComposeResult:
 
+        """
+        Constructs and yields the UI layout for the new diary modal dialog.
+        
+        Returns:
+            ComposeResult: An iterable of widgets forming the modal, including title, input field, and action buttons.
+        """
         with Vertical(id="new_diary_dialog",classes="NewDiaryModal-Dialog"):
             yield Label("Create a new diary", classes="NewDiaryModal-Title")
             yield Label("Diary Name:")
@@ -33,17 +45,28 @@ class NewDiaryModal(ModalScreen[str]):
           self.name_input.focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handles button clicks."""
+        """
+        Handle button press events for the modal.
+        
+        Triggers diary creation when the "Create" button is pressed, or dismisses the modal when the "Cancel" button is pressed.
+        """
         if event.button.id == "create_diary_button":
             self.action_create_diary()
         elif event.button.id == "cancel_button":
             self.dismiss()
 
     def action_cancel(self) -> None:
-        """Action to cancel the modal."""
+        """
+        Cancels the modal dialog and dismisses it without returning a diary name.
+        """
         self.dismiss("")
 
     def action_create_diary(self) -> None:
+        """
+        Validates the diary name input and initiates asynchronous diary creation if valid.
+        
+        If the input is empty, displays a warning notification and refocuses the input field.
+        """
         diary_name = self.name_input.value.strip()
         if diary_name:
 
@@ -54,11 +77,19 @@ class NewDiaryModal(ModalScreen[str]):
             self.name_input.focus()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        """
+        Handles submission of the diary name input field and initiates diary creation if triggered from the correct input.
+        """
         if event.input.id == "NewDiaryModal-NameInput":
             self.action_create_diary()
 
     async def _async_create_diary(self, name: str):
 
+        """
+        Asynchronously creates a new diary entry with the given name and handles post-creation actions.
+        
+        If creation succeeds, dismisses the modal with the diary name, optionally opens the diary for editing, and shows a success notification. If creation fails or an exception occurs, displays an error notification.
+        """
         try:
             service = self.app.service_manager.get_travel_diary_service()
             created_diary = await service.async_create(name)

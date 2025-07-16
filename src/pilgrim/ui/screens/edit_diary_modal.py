@@ -12,6 +12,9 @@ class EditDiaryModal(ModalScreen[tuple[int,str]]):
     ]
 
     def __init__(self, diary_id: int):
+        """
+        Initialize the EditDiaryModal with the specified diary ID, pre-filling the input field with the current diary name.
+        """
         super().__init__()
         self.diary_id = diary_id
         self.current_diary_name = self.app.service_manager.get_travel_diary_service().read_by_id(self.diary_id).name
@@ -32,16 +35,29 @@ class EditDiaryModal(ModalScreen[tuple[int,str]]):
         self.name_input.cursor_position = len(self.name_input.value)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """
+        Handle button press events in the modal.
+        
+        Triggers the save action if the "Save" button is pressed, or cancels and dismisses the modal if the "Cancel" button is pressed.
+        """
         if event.button.id == "save_diary_button":
             self.action_edit_diary()
         elif event.button.id == "cancel_button":
             self.dismiss(None)
     def on_key(self, event):
+        """
+        Handles the Enter key press event by triggering the diary save action and preventing the default behavior.
+        """
         if event.key == "enter":
             self.action_edit_diary()
             event.prevent_default()
 
     def action_edit_diary(self) -> None:
+        """
+        Attempts to save the edited diary name, validating input and providing user feedback.
+        
+        If the new name is non-empty and different from the current name, dismisses the modal and returns the diary ID and new name. If the name is unchanged, notifies the user and dismisses without changes. If the input is empty, notifies the user and refocuses the input field.
+        """
         new_diary_name = self.name_input.value.strip()
         if new_diary_name and new_diary_name != self.current_diary_name:
             self.dismiss((self.diary_id, new_diary_name))
@@ -53,8 +69,14 @@ class EditDiaryModal(ModalScreen[tuple[int,str]]):
             self.name_input.focus()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        """
+        Handles submission of the diary name input field by triggering the save action if the relevant input is submitted.
+        """
         if event.input.id == "edit_diary_name_input":
             self.action_edit_diary()
 
     def action_cancel(self) -> None:
+        """
+        Dismisses the modal without saving changes or returning any data.
+        """
         self.dismiss(None)
