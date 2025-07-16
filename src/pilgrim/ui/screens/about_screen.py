@@ -3,7 +3,7 @@ from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Button, Label, TextArea
 from textual.containers import Container
-
+from importlib.metadata import version
 class AboutScreen(Screen[bool]):
     """Screen to display application information."""
 
@@ -20,7 +20,7 @@ class AboutScreen(Screen[bool]):
         self.app_title = Label("Pilgrim", id="AboutScreen_AboutTitle",classes="AboutScreen_AboutTitle")
         self.content = Label("A TUI Based Travel Diary Application", id="AboutScreen_AboutContent",
                              classes="AboutScreen_AboutContent")
-        self.version = Label("Version: 0.0.1", id="AboutScreen_AboutVersion",
+        self.version = Label(f"Version: {version('Pilgrim')}", id="AboutScreen_AboutVersion",
                              classes="AboutScreen_AboutVersion")
         self.developer = Label("Developed By: Gustavo Henrique Miranda ", id="AboutScreen_AboutAuthor")
         self.contact = Label("git.gustavomiranda.xyz", id="AboutScreen_AboutContact",
