@@ -12,7 +12,7 @@ class NewDiaryModal(ModalScreen[str]):
         Binding("escape", "cancel", "Cancel"),
         Binding("enter", "create_diary", "Create",priority=True),
     ]
-    def __init__(self,autoopen=True):
+    def __init__(self,autoopen:bool = True):
         super().__init__()
         self.auto_open = autoopen
         self.name_input = Input(id="NewDiaryModal-NameInput",classes="NewDiaryModal-NameInput") # This ID is fine, it's specific to the input

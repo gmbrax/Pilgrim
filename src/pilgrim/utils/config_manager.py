@@ -53,9 +53,14 @@ class ConfigManager(metaclass=SingletonMeta):
             self.read_config()
 
     def create_config(self, config: dict = None):
+        # Garantir que o diretório de configuração existe
+        config_dir = DirectoryManager.get_config_directory()
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir, exist_ok=True)
+
         default = {
             "database": {
-                "url": f"{DirectoryManager.get_config_directory()}/database.db",
+                "url": f"{config_dir}/database.db",
                 "type": "sqlite"
             },
             "settings": {
@@ -67,11 +72,12 @@ class ConfigManager(metaclass=SingletonMeta):
         }
         if config is None:
             config = default
+
         try:
-            with open(f"{DirectoryManager.get_config_directory()}/config.toml", "wb") as f:
+            with open(f"{config_dir}/config.toml", "wb") as f:
                 tomli_w.dump(config, f)
-        except FileNotFoundError:
-            print("Error: config.toml not found.")
+        except Exception as e:
+            print(f"Erro ao criar config: {e}")
 
     def save_config(self):
         if self.__data is None:

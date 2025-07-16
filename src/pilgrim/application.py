@@ -7,14 +7,15 @@ from pilgrim.utils import ConfigManager
 class Application:
     def __init__(self):
         self.config_manager = ConfigManager()
+        self.config_manager.read_config()  # Chamar antes de criar o Database
         self.database = Database(self.config_manager)
         session = self.database.session()
         session_manager = ServiceManager()
         session_manager.set_session(session)
-        self.ui = UIApp(session_manager,self.config_manager)
+        self.ui = UIApp(session_manager, self.config_manager)
 
     def run(self):
-        self.config_manager.read_config()
+        print(f"URL do banco: {self.config_manager.database_url}")
         self.database.create()
         self.ui.run()
 
