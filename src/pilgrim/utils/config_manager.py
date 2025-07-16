@@ -1,7 +1,12 @@
+import os.path
+from os import PathLike
 from threading import Lock
 
 import tomli
+import tomli_w
+
 from pilgrim.utils import DirectoryManager
+
 
 class SingletonMeta(type):
     _instances = {}
@@ -14,22 +19,78 @@ class SingletonMeta(type):
                 cls._instances[cls] = instance
         return cls._instances[cls]
 
+
 class ConfigManager(metaclass=SingletonMeta):
     def __init__(self):
         self.database_url = None
         self.database_type = None
         self.auto_open_diary = None
         self.auto_open_new_diary = None
-    @staticmethod
-    def read_config():
+        self.config_dir = DirectoryManager.get_config_directory()
+        self.__data = None
+
+    def read_config(self):
+        if os.path.exists(f"{DirectoryManager.get_config_directory()}/config.toml"):
+            try:
+                with open(f"{DirectoryManager.get_config_directory()}/config.toml", "rb") as f:
+                    data = tomli.load(f)
+                print(data)
+            except FileNotFoundError:
+                print("Error: config.toml not found.")
+            except tomli.TOMLDecodeError as e:
+                print(f"Error decoding TOML: {e}")
+
+            self.__data = data
+            self.database_url = self.__data["database"]["url"]
+            self.database_type = self.__data["database"]["type"]
+
+            if self.__data["settings"]["diary"]["auto_open_diary_on_startup"] == "":
+                self.auto_open_diary = None
+            self.auto_open_new_diary = self.__data["settings"]["diary"]["auto_open_on_creation"]
+        else:
+            print("Error: config.toml not found.")
+            self.create_config()
+            self.read_config()
+
+    def create_config(self, config: dict = None):
+        default = {
+            "database": {
+                "url": f"{DirectoryManager.get_config_directory()}/database.db",
+                "type": "sqlite"
+            },
+            "settings": {
+                "diary": {
+                    "auto_open_diary_on_startup": "",
+                    "auto_open_on_creation": False
+                }
+            }
+        }
+        if config is None:
+            config = default
         try:
-            with open(f"{DirectoryManager.get_config_directory()}/config.toml", "rb") as f:
-                data = tomli.load(f)
-            print(data)
+            with open(f"{DirectoryManager.get_config_directory()}/config.toml", "wb") as f:
+                tomli_w.dump(config, f)
         except FileNotFoundError:
             print("Error: config.toml not found.")
-        except tomli.TOMLDecodeError as e:
-            print(f"Error decoding TOML: {e}")
 
-    def set_database_url(self):
-        pass
+    def save_config(self):
+        if self.__data is None:
+            self.read_config()
+        self.__data["database"]["url"] = self.database_url
+        self.__data["database"]["type"] = self.database_type
+        self.__data["settings"]["diary"]["auto_open_diary_on_startup"] = self.auto_open_diary or ""
+        self.__data["settings"]["diary"]["auto_open_on_creation"] = self.auto_open_new_diary
+
+        self.create_config(self.__data)
+
+    def set_config_dir(self, value):
+        self.config_dir = value
+
+    def set_database_url(self, value: str):
+        self.database_url = value
+
+    def set_auto_open_diary(self, value: str):
+        self.auto_open_diary = value
+
+    def set_auto_open_new_diary(self, value: bool):
+        self.auto_open_new_diary = value

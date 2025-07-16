@@ -5,16 +5,17 @@ from pathlib import Path
 import os
 import shutil
 
+from pilgrim.utils import ConfigManager
 
 Base = declarative_base()
 
 
 
 class Database:
-    def __init__(self,):
-        db_path = "./"
+    def __init__(self,config_manager:ConfigManager):
+        db_path = config_manager.database_url
         self.engine = create_engine(
-            f"sqlite:///{db_path}",
+            f"sqlite:///{config_manager.database_url}",
             echo=False,
             connect_args={"check_same_thread": False},
         )
