@@ -21,6 +21,7 @@
       "sqlalchemy",
         "textual",
         "tomli",
+        "tomli_w"
 
 
     ]
