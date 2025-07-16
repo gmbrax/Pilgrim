@@ -34,11 +34,11 @@ class ConfigManager(metaclass=SingletonMeta):
             try:
                 with open(f"{DirectoryManager.get_config_directory()}/config.toml", "rb") as f:
                     data = tomli.load(f)
-                print(data)
-            except FileNotFoundError:
-                print("Error: config.toml not found.")
+
             except tomli.TOMLDecodeError as e:
-                print(f"Error decoding TOML: {e}")
+                raise ValueError(f"Invalid TOML configuration: {e}")
+            except Exception as e:
+                raise RuntimeError(f"Error reading configuration: {e}")
 
             self.__data = data
             self.database_url = self.__data["database"]["url"]
@@ -77,17 +77,22 @@ class ConfigManager(metaclass=SingletonMeta):
             with open(f"{config_dir}/config.toml", "wb") as f:
                 tomli_w.dump(config, f)
         except Exception as e:
-            print(f"Erro ao criar config: {e}")
+            raise RuntimeError(f"Error creating configuration: {e}")
 
     def save_config(self):
         if self.__data is None:
             self.read_config()
+        if self.__data is None:
+            raise RuntimeError("Error reading configuration.")
+
         self.__data["database"]["url"] = self.database_url
         self.__data["database"]["type"] = self.database_type
         self.__data["settings"]["diary"]["auto_open_diary_on_startup"] = self.auto_open_diary or ""
         self.__data["settings"]["diary"]["auto_open_on_creation"] = self.auto_open_new_diary
-
-        self.create_config(self.__data)
+        try:
+            self.create_config(self.__data)
+        except Exception as e:
+            raise RuntimeError(f"Error saving configuration: {e}")
 
     def set_config_dir(self, value):
         self.config_dir = value
