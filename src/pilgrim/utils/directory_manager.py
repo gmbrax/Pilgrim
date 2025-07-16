@@ -45,11 +45,7 @@ class DirectoryManager:
         Get the database file path following XDG Base Directory specification.
         Creates the directory if it doesn't exist.
         """
-
         pilgrim_dir = DirectoryManager.get_config_directory()
-        pilgrim_dir.mkdir(exist_ok=True)
-
-        # Database file path
         db_path = pilgrim_dir / "database.db"
 
         # If database doesn't exist in new location but exists in current directory,
@@ -57,7 +53,11 @@ class DirectoryManager:
         if not db_path.exists():
             current_db = Path("database.db")
             if current_db.exists():
-                shutil.copy2(current_db, db_path)
-                print(f"Database migrated from {current_db} to {db_path}")
+                try:
+                    shutil.copy2(current_db, db_path)
+                    # Consider using logging instead of print
+                    print(f"Database migrated from {current_db} to {db_path}")
+                except (OSError, shutil.Error) as e:
+                    raise RuntimeError(f"Failed to migrate database: {e}")
 
         return db_path
