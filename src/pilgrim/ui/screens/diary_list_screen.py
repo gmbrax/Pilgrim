@@ -203,11 +203,17 @@ class DiaryListScreen(Screen):
             self.action_open_diary()
 
     def action_new_diary(self):
-        """Action to create new diary"""
+        """
+        Opens the modal dialog to create a new diary and registers a callback for submission.
+        """
         self.app.push_screen(NewDiaryModal(),self._on_new_diary_submitted)
 
     def _on_new_diary_submitted(self, result):
-        """Callback after diary creation"""
+        """
+        Handles the callback after a new diary is submitted.
+        
+        If a diary was created (non-empty result), notifies the user and refreshes the diary list; otherwise, notifies that creation was canceled.
+        """
         if result:  # Se result não é string vazia, o diário foi criado
             self.notify(f"Returning to diary list...")
             # Atualiza a lista de diários
@@ -216,10 +222,17 @@ class DiaryListScreen(Screen):
             self.notify(f"Creation canceled...")
 
     def _on_screen_resume(self) -> None:
+        """
+        Refreshes the diary list when the screen resumes.
+        """
         self.refresh_diaries()
 
     def action_edit_selected_diary(self):
-        """Action to edit selected diary"""
+        """
+        Opens the edit dialog for the currently selected diary.
+        
+        If a diary is selected, displays the edit modal and registers a callback for when the edit is submitted. Notifies the user if no diary is selected.
+        """
         if self.selected_diary_index is not None:
             diary_id = self.diary_id_map.get(self.selected_diary_index)
             if diary_id:
