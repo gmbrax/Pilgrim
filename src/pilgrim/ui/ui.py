@@ -9,6 +9,7 @@ from pilgrim.service.servicemanager import ServiceManager
 from pilgrim.ui.screens.about_screen import AboutScreen
 from pilgrim.ui.screens.diary_list_screen import DiaryListScreen
 from pilgrim.ui.screens.edit_entry_screen import EditEntryScreen
+from pilgrim.utils import ConfigManager
 
 CSS_FILE_PATH = Path(__file__).parent / "styles" / "pilgrim.css"
 
@@ -16,9 +17,10 @@ CSS_FILE_PATH = Path(__file__).parent / "styles" / "pilgrim.css"
 class UIApp(App):
     CSS_PATH = CSS_FILE_PATH
 
-    def __init__(self,service_manager: ServiceManager, **kwargs):
+    def __init__(self,service_manager: ServiceManager, config_manager: ConfigManager, **kwargs):
         super().__init__(**kwargs)
         self.service_manager = service_manager
+        self.config_manager = config_manager
 
 
     def on_mount(self) -> None:

@@ -20,6 +20,9 @@
     dependencies = [
       "sqlalchemy",
         "textual",
+        "tomli",
+        "tomli_w"
+
 
     ]
     [template.plugins.default]
