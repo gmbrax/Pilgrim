@@ -391,6 +391,7 @@ Screen.-modal {
 
 .EditEntryScreen-sidebar{
     background: $primary-darken-1;
+    width: 35%;
 }
 .EditEntryScreen-sidebar-title {
     text-align: center;
@@ -411,7 +412,7 @@ Screen.-modal {
 
 .EditEntryScreen-sidebar-photo-list {
     height: 0.5fr; /* Pega o espaço restante disponível */
-    min-height: 10; /* Garante altura mínima para não sumir */
+    min-height: 8; /* Garante altura mínima para não sumir */
     border: solid $accent;
     margin-bottom: 1;
     overflow-y: auto; /* Adiciona scroll vertical se necessário */
@@ -419,8 +420,8 @@ Screen.-modal {
 
 .EditEntryScreen-sidebar-photo-info {
     height: 0.5fr;
-    max-height: 15; /* Limita altura máxima */
-    min-height: 6;
+    max-height: 13; /* Limita altura máxima */
+    min-height: 5;
     border: solid $warning;
     margin-bottom: 1;
     background: $surface-darken-1;
@@ -429,7 +430,7 @@ Screen.-modal {
 
 .EditEntryScreen-sidebar-help {
     height: 1fr;
-    max-height: 10; /* Altura máxima menor que info */
+    max-height: 12; /* Altura máxima menor que info */
     min-height: 8; /* Altura mínima menor */
     border: solid $success;
     padding: 1;
