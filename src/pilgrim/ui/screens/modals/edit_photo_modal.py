@@ -3,7 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Static, Input, Button
 from textual.containers import Container, Horizontal
 from pilgrim.models.photo import Photo
-import hashlib
+
 
 class EditPhotoModal(Screen):
     """Modal for editing an existing photo (name and caption only)"""
@@ -16,7 +16,7 @@ class EditPhotoModal(Screen):
 
     def compose(self) -> ComposeResult:
         # Generate hash for this photo
-        photo_hash = None
+
         
         yield Container(
             Static("✏️ Edit Photo", classes="EditPhotoModal-Title"),
