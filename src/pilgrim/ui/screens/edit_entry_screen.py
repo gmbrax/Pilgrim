@@ -611,7 +611,8 @@ class EditEntryScreen(Screen):
                 addition_date=original_photo.addition_date,
                 caption=photo_data["caption"],
                 entries=original_photo.entries if original_photo.entries is not None else [],
-                id=original_photo.id
+                id=original_photo.id,
+                photo_hash=original_photo.photo_hash,
             )
 
             result = photo_service.update(original_photo, updated_photo)
