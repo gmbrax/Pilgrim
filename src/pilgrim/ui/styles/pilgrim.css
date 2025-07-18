@@ -389,22 +389,10 @@ Screen.-modal {
     width: 1fr;
 }
 
-.EditEntryScreen-sidebar {
-    width: 40;
-    min-height: 10;
-    border-left: solid green;
-    padding: 1;
-    background: $surface-darken-2;
-    color: $primary;
-    text-style: bold;
-    content-align: left top;
+.EditEntryScreen-sidebar{
+    background: $primary-darken-1;
+    width: 45%;
 }
-
-.EditEntryScreen-content-container {
-    layout: horizontal;
-    height: 1fr;
-}
-
 .EditEntryScreen-sidebar-title {
     text-align: center;
     text-style: bold;
@@ -417,30 +405,39 @@ Screen.-modal {
 .EditEntryScreen-sidebar-content {
     height: 1fr;
     layout: vertical;
+    margin-left: 1;
+    margin-right: 1;
+
 }
 
 .EditEntryScreen-sidebar-photo-list {
-    height: 1fr;
+    height: 2fr; /* Pega o espaço restante disponível */
+    min-height: 5; /* Garante altura mínima para não sumir */
     border: solid $accent;
     margin-bottom: 1;
+    overflow-y: auto; /* Adiciona scroll vertical se necessário */
 }
 
 .EditEntryScreen-sidebar-photo-info {
-    height: auto;
-    min-height: 3;
-    border: solid $warning;
+    height: 1fr;
+    max-height: 15; /* Limita altura máxima */
+    min-height: 13;
     padding: 1;
+    border: solid $warning;
     margin-bottom: 1;
     background: $surface-darken-1;
+    overflow-y: auto; /* Adiciona scroll se exceder max-height */
 }
 
 .EditEntryScreen-sidebar-help {
-    height: auto;
-    min-height: 8;
+    height: 1fr;
+    max-height: 10; /* Altura máxima menor que info */
+    min-height: 8; /* Altura mínima menor */
     border: solid $success;
     padding: 1;
     background: $surface-darken-1;
     text-style: italic;
+    overflow-y: auto; /* Adiciona scroll se exceder max-height */
 }
 
 /* Photo Modal Styles */

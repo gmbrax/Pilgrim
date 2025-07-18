@@ -87,7 +87,7 @@ class EditEntryScreen(Screen):
         self.text_entry = TextArea(id="text_entry", classes="EditEntryScreen-text-entry")
 
         # Sidebar widgets
-        self.sidebar_title = Static("📸 Photos", classes="EditEntryScreen-sidebar-title")
+        self.sidebar_title = Static("Photos", classes="EditEntryScreen-sidebar-title")
         self.photo_list = OptionList(id="photo_list", classes="EditEntryScreen-sidebar-photo-list")
         self.photo_info = Static("", classes="EditEntryScreen-sidebar-photo-info")
         self.help_text = Static("", classes="EditEntryScreen-sidebar-help")
@@ -296,30 +296,28 @@ class EditEntryScreen(Screen):
 
             if not self.cached_photos:
                 self.photo_info.update("No photos found for this diary")
-                self.help_text.update("📸 No photos available\n\nUse Photo Manager to add photos")
+                self.help_text.update("No photos available\n\nUse Photo Manager to add photos")
                 return
 
             # Add photos to the list with hash
             for photo in self.cached_photos:
                 # Show name and hash in the list
                 photo_hash = str(photo.photo_hash)[:8]
-                self.photo_list.add_option(f"📷 {photo.name} \\[{photo_hash}\]")
+                self.photo_list.add_option(f"{photo.name} \\[{photo_hash}\]")
 
-            self.photo_info.update(f"📸 {len(self.cached_photos)} photos in diary")
+            self.photo_info.update(f"{len(self.cached_photos)} photos in diary")
 
             # Updated help a text with hash information
             help_text = (
-                "[b]⌨️  Sidebar Shortcuts[/b]\n"
+                "[b]Sidebar Shortcuts[/b]\n"
                 "[b][green]i[/green][/b]: Insert photo into entry\n"
                 "[b][green]n[/green][/b]: Add new photo\n"
                 "[b][green]d[/green][/b]: Delete selected photo\n"
                 "[b][green]e[/green][/b]: Edit selected photo\n"
                 "[b][yellow]Tab[/yellow][/b]: Back to editor\n"
                 "[b][yellow]F8[/yellow][/b]: Show/hide sidebar\n"
-                "[b][yellow]F9[/yellow][/b]: Switch focus (if needed)\n\n"
                 "[b]📝 Photo References[/b]\n"
-                "Use: \\[\\[photo:name:hash\\]\\]\n"
-                "Or: \\[\\[photo::hash\\]\\]"
+                "\\[\\[photo::hash\\]\\]"
             )
             self.help_text.update(help_text)
         except Exception as e:
@@ -429,9 +427,7 @@ class EditEntryScreen(Screen):
         photo_details += f"🔗 {photo_hash}\n"
         photo_details += f"📅 {selected_photo.addition_date}\n"
         photo_details += f"💬 {selected_photo.caption or 'No caption'}\n"
-        photo_details += f"📁 {selected_photo.filepath}\n\n"
         photo_details += f"[b]Reference formats:[/b]\n"
-        photo_details += f"\\[\\[photo:{selected_photo.name}:{photo_hash}\\]\\]\n"
         photo_details += f"\\[\\[photo::{photo_hash}\\]\\]"
 
         self.photo_info.update(photo_details)
@@ -742,15 +738,15 @@ class EditEntryScreen(Screen):
         self.notify(f"Selected photo: {selected_photo.name} \\[{photo_hash}\\]")
 
         # Update photo info with details including hash
-        photo_details = f"📷 {selected_photo.name}\n"
-        photo_details += f"🔗 {photo_hash}\n"
-        photo_details += f"📅 {selected_photo.addition_date}\n"
+        photo_details = f"Name: {selected_photo.name}\n"
+        photo_details += f"Hash: {photo_hash}\n"
+        photo_details += f"Date: {selected_photo.addition_date}\n"
         if selected_photo.caption:
-            photo_details += f"💬 {selected_photo.caption}\n"
-        photo_details += f"📁 {selected_photo.filepath}\n\n"
+            photo_details += f"Caption: {selected_photo.caption}\n"
+        else:
+            photo_details += f"Caption: No Caption\n"
         photo_details += f"[b]Reference formats:[/b]\n"
-        photo_details += f"\\[\\[photo:{selected_photo.name}:{photo_hash}\\]\\]\n"
-        photo_details += f"\\[\\[photo::{photo_hash}\\]\\]"
+        photo_details += f"\\[\\[photo::{photo_hash}]]"
 
         self.photo_info.update(photo_details)
 
