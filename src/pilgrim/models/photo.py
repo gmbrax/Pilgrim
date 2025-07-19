@@ -4,6 +4,7 @@ from pathlib import Path
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.schema import Index
 
 from pilgrim.models.photo_in_entry import photo_entry_association
 from ..database import Base
@@ -24,6 +25,9 @@ class Photo(Base):
     )
 
     fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"),nullable=False)
+    __table_args__ = (
+        Index('idx_photo_hash_diary', 'hash', 'fk_travel_diary_id'),
+    )
 
     def __init__(self, filepath, name, photo_hash, addition_date=None, caption=None, entries=None, fk_travel_diary_id=None, **kw: Any):
         super().__init__(**kw)

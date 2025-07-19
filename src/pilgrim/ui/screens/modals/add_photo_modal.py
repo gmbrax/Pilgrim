@@ -63,9 +63,15 @@ class AddPhotoModal(Screen):
 
     async def _async_create_photo(self, photo_data: dict):
         """Creates a new photo asynchronously using PhotoService"""
+
+
         try:
             service_manager = self.app.service_manager
             photo_service = service_manager.get_photo_service()
+
+            if photo_service.check_photo_by_hash(photo_service.hash_file(photo_data["filepath"]),self.diary_id):
+                self.notify("Photo already exists in database", severity="error")
+                return
 
             new_photo = photo_service.create(
                 filepath=Path(photo_data["filepath"]),
