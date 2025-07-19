@@ -1,0 +1,60 @@
+name: Pylint and SonarCloud
+
+on: 
+  push:
+    branches: [ main, master, staging ]
+  pull_request:
+    branches: [ main, master, staging ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Needed for SonarCloud
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install pylint ruff coverage pytest
+
+    - name: Analysing the code with pylint (console output)
+      run: |
+        pylint --disable=C0114,C0115,C0116 --exit-zero $(git ls-files '*.py')
+
+    - name: Generate Pylint report for SonarCloud
+      run: |
+        pylint --disable=C0114,C0115,C0116 --output-format=json --exit-zero $(git ls-files '*.py') > pylint-report.json
+
+    - name: Run Ruff
+      run: |
+        ruff check --output-format=json . > ruff-report.json || true
+
+    - name: Run tests with coverage (if you have tests)
+      run: |
+        if [ -d "tests" ] || [ -f "test_*.py" ] || [ -f "*_test.py" ]; then
+          coverage run -m pytest || true
+          coverage xml
+        fi
+
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.python.pylint.reportPaths=pylint-report.json
+          -Dsonar.python.coverage.reportPaths=coverage.xml
+           -Dsonar.python.ruff.reportPaths=ruff-report.json
+
