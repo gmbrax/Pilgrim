@@ -8,6 +8,7 @@ from textual.widgets import Label, Input, Button
 class EditDiaryModal(ModalScreen[tuple[int,str]]):
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
+        Binding("enter", "edit_diary", "Save",priority=True),
     ]
 
     def __init__(self, diary_id: int):
@@ -32,17 +33,28 @@ class EditDiaryModal(ModalScreen[tuple[int,str]]):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save_diary_button":
-            new_diary_name = self.name_input.value.strip()
-            if new_diary_name and new_diary_name != self.current_diary_name:
-                self.dismiss((self.diary_id, new_diary_name))
-            elif new_diary_name == self.current_diary_name:
-                self.notify("No changes made.", severity="warning")
-                self.dismiss(None)
-            else:
-                self.notify("Diary name cannot be empty.", severity="warning")
-                self.name_input.focus()
+            self.action_edit_diary()
         elif event.button.id == "cancel_button":
             self.dismiss(None)
+    def on_key(self, event):
+        if event.key == "enter":
+            self.action_edit_diary()
+            event.prevent_default()
+
+    def action_edit_diary(self) -> None:
+        new_diary_name = self.name_input.value.strip()
+        if new_diary_name and new_diary_name != self.current_diary_name:
+            self.dismiss((self.diary_id, new_diary_name))
+        elif new_diary_name == self.current_diary_name:
+            self.notify("No changes made.", severity="warning")
+            self.dismiss(None)
+        else:
+            self.notify("Diary name cannot be empty.", severity="warning")
+            self.name_input.focus()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "edit_diary_name_input":
+            self.action_edit_diary()
 
     def action_cancel(self) -> None:
         self.dismiss(None)

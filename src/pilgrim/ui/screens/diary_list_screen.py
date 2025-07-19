@@ -206,29 +206,18 @@ class DiaryListScreen(Screen):
         """Action to create new diary"""
         self.app.push_screen(NewDiaryModal(),self._on_new_diary_submitted)
 
-    def _on_new_diary_submitted(self,result):
-        self.notify(str(result))
-        if result:
-            self.notify(f"Creating Diary:{result}'...")
-            self.call_later(self._async_create_diary,result)
+    def _on_new_diary_submitted(self, result):
+        """Callback after diary creation"""
+        if result:  # Se result não é string vazia, o diário foi criado
+            self.notify(f"Returning to diary list...")
+            # Atualiza a lista de diários
+            self.refresh_diaries()
         else:
-            self.notify(f"Canceled...")
+            self.notify(f"Creation canceled...")
 
-    async def _async_create_diary(self,name: str):
-
-        try:
-            service = self.app.service_manager.get_travel_diary_service()
-            created_diary = await service.async_create(name)
-            if created_diary:
-                self.diary_id_map[created_diary.id] = created_diary.id
-                await self.async_refresh_diaries()
-                self.notify(f"Diary: '{name}' created!")
-            else:
-                self.notify("Error Creating the diary")
-        except Exception as e:
-            self.notify(f"Exception on creating the diary: {str(e)}")
-
-
+    def _on_screen_resume(self) -> None:
+        super()._on_screen_resume()
+        self.refresh_diaries()
 
     def action_edit_selected_diary(self):
         """Action to edit selected diary"""

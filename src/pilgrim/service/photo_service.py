@@ -14,8 +14,9 @@ class PhotoService:
     def __init__(self, session):
         self.session = session
 
-    def _hash_file(self, filepath: Path) -> str:
-        """Calculate hash of a file using SHA3-384."""
+    @staticmethod
+    def hash_file(filepath: Path) -> str:
+        """Calculate the hash of a file using SHA3-384."""
         hash_func = hashlib.new('sha3_384')
         with open(filepath, 'rb') as f:
             while chunk := f.read(8192):
@@ -64,9 +65,17 @@ class PhotoService:
 
         return dest_path
 
+    def check_photo_by_hash(self, photohash:str, traveldiaryid:int):
+        photo = (self.session.query(Photo).filter(Photo.photo_hash == photohash,Photo.fk_travel_diary_id == traveldiaryid)
+                 .first())
+        return photo
+
     def create(self, filepath: Path, name: str, travel_diary_id: int, caption=None, addition_date=None) -> Photo | None:
         travel_diary = self.session.query(TravelDiary).filter(TravelDiary.id == travel_diary_id).first()
         if not travel_diary:
+            return None
+        photo_hash = self.hash_file(filepath)
+        if self.check_photo_by_hash(photo_hash, travel_diary_id):
             return None
 
         # Copy photo to diary's images directory
@@ -79,8 +88,6 @@ class PhotoService:
             except ValueError:
                 addition_date = None
 
-        # Calculate hash from the copied file
-        photo_hash = self._hash_file(copied_path)
         
         new_photo = Photo(
             filepath=str(copied_path),  # Store the path to the copied file
@@ -118,7 +125,7 @@ class PhotoService:
                         old_path.unlink()
                     original.filepath = str(new_path)
                     # Update hash based on the new copied file
-                    original.photo_hash = self._hash_file(new_path)
+                    original.photo_hash = self.hash_file(new_path)
             
             original.name = photo_dst.name
             original.addition_date = photo_dst.addition_date
