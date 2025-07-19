@@ -54,6 +54,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
+          -Dsonar.projectKey=gmbrax_Pilgrim
+          -Dsonar.organization=gmbrax
           -Dsonar.python.pylint.reportPaths=pylint-report.json
           -Dsonar.python.coverage.reportPaths=coverage.xml
            -Dsonar.python.ruff.reportPaths=ruff-report.json
