@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import Mock
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 
 from pilgrim.database import Base
@@ -91,3 +92,42 @@ def test_create_entry_successfully_without_photo(populated_db_session):
     assert len(created_entry.photos) == 0
     entry_in_db = session.query(Entry).filter_by(id=created_entry.id).one()
     assert entry_in_db.title == "Primeiro Dia na Praia"
+
+def test_create_entry_fails_with_null_title(populated_db_session):
+    session = populated_db_session
+    service = EntryService(session)
+    diary_id = 1
+    with pytest.raises(IntegrityError):
+        service.create(
+            travel_diary_id=diary_id,
+            title=None,
+            text="Um texto qualquer.",
+            date=datetime.now(),
+            photos=[]
+        )
+
+def test_create_entry_fails_with_null_date(populated_db_session):
+    session = populated_db_session
+    service = EntryService(session)
+    diary_id = 1
+    with pytest.raises(IntegrityError):
+        service.create(
+            travel_diary_id=diary_id,
+            title="Sabado de sol",
+            text="Um texto qualquer.",
+            date=None,
+            photos=[]
+        )
+
+def test_create_entry_fails_with_null_diary_id(populated_db_session):
+    session = populated_db_session
+    service = EntryService(session)
+    diary_id = 1
+    result = service.create(
+            travel_diary_id=None,
+            title="Sabado de sol",
+            text="Um texto qualquer.",
+            date=datetime.now(),
+            photos=[]
+        )
+    assert result is None
