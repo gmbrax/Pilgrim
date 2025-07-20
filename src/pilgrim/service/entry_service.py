@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import List
 
-from ..models.entry import Entry
-from ..models.travel_diary import TravelDiary
-from ..models.photo import Photo  # ✨ Importe o modelo Photo
+from pilgrim.models.entry import Entry
+from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.models.photo import Photo  # ✨ Importe o modelo Photo
 
 
 class EntryService:

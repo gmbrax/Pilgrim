@@ -6,7 +6,7 @@ from pathlib import Path
 from pilgrim.utils import DirectoryManager
 from sqlalchemy.exc import IntegrityError
 
-from ..models.travel_diary import TravelDiary
+from pilgrim.models.travel_diary import TravelDiary
 
 
 class TravelDiaryService:
