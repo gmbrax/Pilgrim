@@ -29,10 +29,6 @@ class Database:
         self._session_maker = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)
 
     def create(self):
-        # ADICIONE ESTAS 3 LINHAS AQUI
-        print("\n--- [DIAGNÓSTICO DA APLICAÇÃO] ---")
-        print("Tabelas que a Base conhece:", sorted(list(Base.metadata.tables.keys())))
-        print("----------------------------------")
         Base.metadata.create_all(self.engine)
 
     def session(self):
