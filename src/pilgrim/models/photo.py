@@ -7,7 +7,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Index
 
 from pilgrim.models.photo_in_entry import photo_entry_association
-from ..database import Base
+from pilgrim.database import Base
+
 
 
 class Photo(Base):

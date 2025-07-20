@@ -4,7 +4,8 @@ from pilgrim.models.photo_in_entry import photo_entry_association
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
-from ..database import Base
+from pilgrim.database import Base
+
 
 
 class Entry(Base):
