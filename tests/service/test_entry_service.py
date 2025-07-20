@@ -68,3 +68,26 @@ def test_create_entry_fails_when_diary_id_is_invalid(db_session):
     )
 
     assert result is None
+
+def test_create_entry_successfully_without_photo(populated_db_session):
+    session = populated_db_session
+    service = EntryService(session)
+    diary_id = 1  # Sabemos que o ID é 1 por causa da nossa fixture
+    title = "Primeiro Dia na Praia"
+    text = "O dia foi ensolarado e o mar estava ótimo."
+    date = datetime(2025, 7, 20)
+    photos = []
+    created_entry = service.create(
+        travel_diary_id=diary_id,
+        title=title,
+        text=text,
+        date=date,
+        photos=photos
+    )
+    assert created_entry is not None
+    assert created_entry.id is not None  # Garante que foi salvo no BD e tem um ID
+    assert created_entry.title == title
+    assert created_entry.text == text
+    assert len(created_entry.photos) == 0
+    entry_in_db = session.query(Entry).filter_by(id=created_entry.id).one()
+    assert entry_in_db.title == "Primeiro Dia na Praia"
