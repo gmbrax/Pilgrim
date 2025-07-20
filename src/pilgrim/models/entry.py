@@ -11,9 +11,9 @@ from pilgrim.database import Base
 class Entry(Base):
     __tablename__ = "entries"
     id = Column(Integer, primary_key=True)
-    title = Column(String)
+    title = Column(String,nullable=False)
     text = Column(String)
-    date = Column(DateTime)
+    date = Column(DateTime,nullable=False)
     photos = relationship(
         "Photo",
         secondary=photo_entry_association,
