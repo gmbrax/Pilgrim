@@ -53,3 +53,18 @@ def test_create_entry_successfully(populated_db_session):
 
     entry_in_db = session.query(Entry).filter_by(id=created_entry.id).one()
     assert entry_in_db.title == "Primeiro Dia na Praia"
+
+def test_create_entry_fails_when_diary_id_is_invalid(db_session):
+    session = db_session
+    service = EntryService(session)
+    invalid_id = 666
+
+    result = service.create(
+        travel_diary_id=invalid_id,
+        title="Título de Teste",
+        text="Texto de Teste",
+        date=datetime(2025, 7, 20),
+        photos=[]
+    )
+
+    assert result is None
