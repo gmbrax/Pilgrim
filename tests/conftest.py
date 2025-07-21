@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 from pilgrim.database import Base
 from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.models.photo import Photo
 
 # Todos os imports necessários para as fixtures devem estar aqui
 # ...

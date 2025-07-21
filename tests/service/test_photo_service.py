@@ -108,3 +108,32 @@ def test_check_photo_by_hash_returns_none_when_not_found(session_with_photos):
     invalid_diary_id = 999
     result2 = service.check_photo_by_hash(existing_hash, invalid_diary_id)
     assert result2 is None
+
+@patch('pathlib.Path.unlink')
+@patch('pathlib.Path.exists')
+@patch.object(DirectoryManager, 'get_diaries_root', return_value="/fake/diaries_root")
+def test_delete_photo_successfully(mock_get_root, mock_exists, mock_unlink, session_with_photos):
+    session, photos = session_with_photos
+    service = PhotoService(session)
+    photo_to_delete = photos[0]
+    photo_id = photo_to_delete.id
+    mock_exists.return_value = True
+    deleted_photo_data = service.delete(photo_to_delete)
+    mock_unlink.assert_called_once()
+    assert deleted_photo_data is not None
+    assert deleted_photo_data.id == photo_id
+    photo_in_db = service.read_by_id(photo_id)
+    assert photo_in_db is None
+
+@patch('pathlib.Path.unlink')
+def test_delete_returns_none_for_non_existent_photo(mock_unlink, db_session):
+    service = PhotoService(db_session)
+    non_existent_photo = Photo(
+        filepath="/fake/path.jpg", name="dummy",
+        photo_hash="dummy_hash", fk_travel_diary_id=1
+    )
+    non_existent_photo.id = 999
+    result = service.delete(non_existent_photo)
+    assert result is None
+    mock_unlink.assert_not_called()
+
