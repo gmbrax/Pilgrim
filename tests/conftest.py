@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 from pilgrim.database import Base
 from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.models.photo import Photo
 
 # Todos os imports necessários para as fixtures devem estar aqui
 # ...
@@ -34,3 +35,30 @@ def session_with_one_diary(db_session):
     db_session.commit()
     db_session.refresh(diary)
     return db_session, diary
+
+
+@pytest.fixture
+def session_with_photos(session_with_one_diary):
+    session, diary = session_with_one_diary
+
+    # Usamos a mesma raiz de diretório que o mock do teste espera
+    diaries_root = "/fake/diaries_root"
+
+    photo1 = Photo(
+        # CORREÇÃO: O caminho agora inclui a raiz e a subpasta 'images'
+        filepath=f"{diaries_root}/{diary.directory_name}/images/p1.jpg",
+        name="Foto 1",
+        photo_hash="hash1",
+        fk_travel_diary_id=diary.id
+    )
+    photo2 = Photo(
+        filepath=f"{diaries_root}/{diary.directory_name}/images/p2.jpg",
+        name="Foto 2",
+        photo_hash="hash2",
+        fk_travel_diary_id=diary.id
+    )
+
+    session.add_all([photo1, photo2])
+    session.commit()
+
+    return session, [photo1, photo2]
