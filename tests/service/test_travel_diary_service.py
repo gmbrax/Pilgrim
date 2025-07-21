@@ -86,6 +86,26 @@ def test_update_returns_none_for_invalid_id(db_session):
     result = service.update(travel_diary_id=999, name="Nome Novo")
     assert result is None
 
+@patch.object(TravelDiaryService, '_cleanup_diary_directory')
+def test_delete_diary_successfully(mock_cleanup, session_with_one_diary):
+    session, diary_to_delete = session_with_one_diary
+    service = TravelDiaryService(session)
+    result = service.delete(diary_to_delete)
+    assert result is not None
+    assert result.id == diary_to_delete.id
+    mock_cleanup.assert_called_once_with(diary_to_delete)
+    diary_in_db = service.read_by_id(diary_to_delete.id)
+    assert diary_in_db is None
+
+@patch.object(TravelDiaryService, '_cleanup_diary_directory')
+def test_delete_returns_none_for_non_existent_diary(mock_cleanup, db_session):
+    service = TravelDiaryService(db_session)
+    non_existent_diary = TravelDiary(name="dummy", directory_name="dummy")
+    non_existent_diary.id = 999
+    result = service.delete(non_existent_diary)
+    assert result is None
+    mock_cleanup.assert_not_called()
+
 @patch.object(TravelDiaryService, '_sanitize_directory_name')
 def test_update_raises_value_error_on_name_collision(mock_sanitize, db_session):
 
