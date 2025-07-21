@@ -1,4 +1,5 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+from pathlib import Path
 
 import pytest
 
@@ -64,6 +65,40 @@ def test_read_all_returns_empty_list_for_empty_db(mock_ensure_dir, db_session):
     assert len(diaries) == 0
     mock_ensure_dir.assert_not_called()
 
+@patch.object(TravelDiaryService, '_ensure_diary_directory')
+@patch('pathlib.Path.rename')
+@patch.object(TravelDiaryService, '_get_diary_directory')
+def test_update_diary_successfully(mock_get_dir, mock_path_rename, mock_ensure, session_with_one_diary):
+    session, diary_to_update = session_with_one_diary
+    service = TravelDiaryService(session)
+    old_path = MagicMock(spec=Path)  # Um mock que se parece com um objeto Path
+    old_path.exists.return_value = True  # Dizemos que o diretório antigo "existe"
+    new_path = Path("/fake/path/diario_atualizado")
+    mock_get_dir.side_effect = [old_path, new_path]
+    updated_diary = service.update(diary_to_update.id, "Diário Atualizado")
+    assert updated_diary is not None
+    assert updated_diary.name == "Diário Atualizado"
+    assert updated_diary.directory_name == "diario_atualizado"
+    old_path.rename.assert_called_once_with(new_path)
+
+def test_update_returns_none_for_invalid_id(db_session):
+    service = TravelDiaryService(db_session)
+    result = service.update(travel_diary_id=999, name="Nome Novo")
+    assert result is None
+
+@patch.object(TravelDiaryService, '_sanitize_directory_name')
+def test_update_raises_value_error_on_name_collision(mock_sanitize, db_session):
+
+    d1 = TravelDiary(name="Diário A", directory_name="diario_a")
+    d2 = TravelDiary(name="Diário B", directory_name="diario_b")
+    db_session.add_all([d1, d2])
+    db_session.commit()
+    db_session.refresh(d1)
+    mock_sanitize.return_value = "diario_b"
+    service = TravelDiaryService(db_session)
+    with pytest.raises(ValueError, match="Could not update diary"):
+        service.update(d1.id, "Diário B")
+
 def test_sanitize_directory_name_formats_string_correctly(db_session):
     service = TravelDiaryService(db_session)
     name1 = "Minha Primeira Viagem"
@@ -71,7 +106,7 @@ def test_sanitize_directory_name_formats_string_correctly(db_session):
     name2 = "Viagem para o #Rio de Janeiro! @2025"
     assert service._sanitize_directory_name(name2) == "viagem_para_o_rio_de_janeiro_2025"
     name3 = "  Mochilão na Europa   "
-    assert service._sanitize_directory_name(name3) == "mochilão_na_europa"
+    assert service._sanitize_directory_name(name3) == "mochilao_na_europa"
 
 def test_sanitize_directory_name_handles_uniqueness(db_session):
     existing_diary = TravelDiary(name="Viagem para a Praia", directory_name="viagem_para_a_praia")
