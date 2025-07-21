@@ -2,7 +2,6 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from pilgrim import Photo
 from pilgrim.database import Base
 from pilgrim.models.travel_diary import TravelDiary
 
