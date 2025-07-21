@@ -13,6 +13,7 @@ class TravelDiary(Base):
     name = Column(String, nullable=False)
     directory_name = Column(String, nullable=False, unique=True)
     entries = relationship("Entry", back_populates="travel_diary", cascade="all, delete-orphan")
+    photos = relationship("Photo", back_populates="travel_diary", cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint('directory_name', name='uq_travel_diary_directory_name'),

@@ -25,7 +25,8 @@ class Photo(Base):
         back_populates="photos"
     )
 
-    fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"),nullable=False)
+    fk_travel_diary_id = Column(Integer, ForeignKey("travel_diaries.id"), nullable=False)
+    travel_diary = relationship("TravelDiary", back_populates="photos")
     __table_args__ = (
         Index('idx_photo_hash_diary', 'hash', 'fk_travel_diary_id'),
     )
