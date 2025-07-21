@@ -15,6 +15,7 @@ from pilgrim.models.photo import Photo
 from pilgrim.service.entry_service import EntryService
 
 
+
 @pytest.fixture
 def session_with_an_entry(populated_db_session):
     session = populated_db_session
