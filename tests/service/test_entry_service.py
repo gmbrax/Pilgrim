@@ -1,3 +1,5 @@
+from re import search
+
 import pytest
 from datetime import datetime
 from unittest.mock import Mock
@@ -42,6 +44,19 @@ def session_with_an_entry(populated_db_session):
     session.add(initial_entry)
     session.commit()
     return session, initial_entry.id
+
+@pytest.fixture
+def session_with_multiple_entries(populated_db_session):
+    """Fixture que cria um diário e duas entradas para ele."""
+    session = populated_db_session
+
+    entry1 = Entry(title="Entrada 1", text="Texto 1", date=datetime(2025, 1, 1), travel_diary_id=1)
+    entry2 = Entry(title="Entrada 2", text="Texto 2", date=datetime(2025, 1, 2), travel_diary_id=1)
+
+    session.add_all([entry1, entry2])
+    session.commit()
+
+    return session
 
 def test_create_entry_successfully(populated_db_session):
     session = populated_db_session
@@ -144,6 +159,34 @@ def test_create_entry_fails_with_null_diary_id(populated_db_session):
             photos=[]
         )
     assert result is None
+def test_ready_by_id_successfully(session_with_an_entry):
+    session,_ = session_with_an_entry
+    service = EntryService(session)
+    search_id = 1
+    result = service.read_by_id(search_id)
+    assert result is not None
+def test_ready_by_id_fails_when_id_is_invalid(db_session):
+    session = db_session
+    service = EntryService(session)
+    invalid_id = 666
+    result = service.read_by_id(invalid_id)
+    assert result is None
+
+def test_read_all_returns_all_entries(session_with_multiple_entries):
+    session = session_with_multiple_entries
+    service = EntryService(session)
+    all_entries = service.read_all()
+    assert isinstance(all_entries, list)
+    assert len(all_entries) == 2
+    assert all_entries[0].title == "Entrada 1"
+    assert all_entries[1].title == "Entrada 2"
+
+def test_read_all_returns_empty_list_on_empty_db(db_session):
+    session = db_session
+    service = EntryService(session)
+    all_entries = service.read_all()
+    assert isinstance(all_entries, list)
+    assert len(all_entries) == 0
 
 def test_update_entry_successfully(session_with_an_entry):
     session, entry_id = session_with_an_entry
