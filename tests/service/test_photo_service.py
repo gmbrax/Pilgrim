@@ -54,3 +54,55 @@ def test_create_photo_returns_none_if_hash_exists(mock_hash, mock_copy, session_
     )
     assert new_photo is None
     mock_copy.assert_not_called()
+
+def test_read_by_id_successfully(session_with_photos):
+    session, photos = session_with_photos
+    service = PhotoService(session)
+    photo_to_find_id = photos[0].id
+    found_photo = service.read_by_id(photo_to_find_id)
+    assert found_photo is not None
+    assert found_photo.id == photo_to_find_id
+    assert found_photo.name == "Foto 1"
+
+def test_read_by_id_returns_none_for_invalid_id(db_session):
+    service = PhotoService(db_session)
+    result = service.read_by_id(999)
+    assert result is None
+
+def test_read_all_returns_all_photos(session_with_photos):
+    session, _ = session_with_photos
+    service = PhotoService(session)
+    all_photos = service.read_all()
+
+    assert isinstance(all_photos, list)
+    assert len(all_photos) == 2
+    assert all_photos[0].name == "Foto 1"
+    assert all_photos[1].name == "Foto 2"
+
+def test_read_all_returns_empty_list_for_empty_db(db_session):
+    service = PhotoService(db_session)
+    all_photos = service.read_all()
+    assert isinstance(all_photos, list)
+    assert len(all_photos) == 0
+
+def test_check_photo_by_hash_finds_existing_photo(session_with_photos):
+    session, photos = session_with_photos
+    service = PhotoService(session)
+    existing_photo = photos[0]
+    hash_to_find = existing_photo.photo_hash  # "hash1"
+    diary_id = existing_photo.fk_travel_diary_id  # 1
+    found_photo = service.check_photo_by_hash(hash_to_find, diary_id)
+    assert found_photo is not None
+    assert found_photo.id == existing_photo.id
+    assert found_photo.photo_hash == hash_to_find
+
+def test_check_photo_by_hash_returns_none_when_not_found(session_with_photos):
+    session, photos = session_with_photos
+    service = PhotoService(session)
+    existing_hash = photos[0].photo_hash  # "hash1"
+    existing_diary_id = photos[0].fk_travel_diary_id  # 1
+    result1 = service.check_photo_by_hash("hash_inexistente", existing_diary_id)
+    assert result1 is None
+    invalid_diary_id = 999
+    result2 = service.check_photo_by_hash(existing_hash, invalid_diary_id)
+    assert result2 is None
