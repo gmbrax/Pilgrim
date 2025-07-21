@@ -20,7 +20,8 @@ dependencies = [
     "sqlalchemy",
     "textual",
     "tomli",
-    "tomli_w"
+    "tomli_w",
+    "unidecode"
 ]
 
 [project.urls]
