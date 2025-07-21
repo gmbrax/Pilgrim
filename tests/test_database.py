@@ -4,7 +4,7 @@ from pathlib import Path
 from sqlalchemy import inspect, Column, Integer, String
 from sqlalchemy.orm import Session
 
-from src.pilgrim.database import Database,Base
+from pilgrim.database import Database,Base
 
 class MockUser(Base):
     __tablename__ = 'mock_users'
