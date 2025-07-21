@@ -27,6 +27,43 @@ async def test_create_diary_handles_integrity_error(mock_sanitize, mock_ensure_d
         await service.async_create("Qualquer Nome Novo")
     mock_ensure_dir.assert_not_called()
 
+@patch.object(TravelDiaryService, '_ensure_diary_directory')
+def test_read_by_id_successfully(mock_ensure_dir, session_with_one_diary):
+    session, diary_to_find = session_with_one_diary
+    service = TravelDiaryService(session)
+    found_diary = service.read_by_id(diary_to_find.id)
+    assert found_diary is not None
+    assert found_diary.id == diary_to_find.id
+    assert found_diary.name == "Diário de Teste"
+    mock_ensure_dir.assert_called_once_with(found_diary)
+
+@patch.object(TravelDiaryService, '_ensure_diary_directory')
+def test_read_by_id_returns_none_for_invalid_id(mock_ensure_dir, db_session):
+    service = TravelDiaryService(db_session)
+    result = service.read_by_id(999)
+    assert result is None
+    mock_ensure_dir.assert_not_called()
+
+@patch.object(TravelDiaryService, '_ensure_diary_directory')
+def test_read_all_returns_all_diaries(mock_ensure_dir, db_session):
+    d1 = TravelDiary(name="Diário 1", directory_name="d1")
+    d2 = TravelDiary(name="Diário 2", directory_name="d2")
+    db_session.add_all([d1, d2])
+    db_session.commit()
+    service = TravelDiaryService(db_session)
+    diaries = service.read_all()
+    assert isinstance(diaries, list)
+    assert len(diaries) == 2
+    assert mock_ensure_dir.call_count == 2
+
+@patch.object(TravelDiaryService, '_ensure_diary_directory')
+def test_read_all_returns_empty_list_for_empty_db(mock_ensure_dir, db_session):
+    service = TravelDiaryService(db_session)
+    diaries = service.read_all()
+    assert isinstance(diaries, list)
+    assert len(diaries) == 0
+    mock_ensure_dir.assert_not_called()
+
 def test_sanitize_directory_name_formats_string_correctly(db_session):
     service = TravelDiaryService(db_session)
     name1 = "Minha Primeira Viagem"
