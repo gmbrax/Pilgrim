@@ -14,23 +14,6 @@ from pilgrim.models.photo import Photo
 
 from pilgrim.service.entry_service import EntryService
 
-@pytest.fixture(scope="function")
-def db_session():
-    engine = create_engine("sqlite:///:memory:")
-
-    Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    yield session
-    session.close()
-    Base.metadata.drop_all(engine)
-
-@pytest.fixture
-def populated_db_session(db_session):
-    travel_diary = TravelDiary(name="My Travel Diary", directory_name="viagem-teste")
-    db_session.add(travel_diary)
-    db_session.commit()
-    return db_session
 
 @pytest.fixture
 def session_with_an_entry(populated_db_session):
