@@ -26,3 +26,11 @@ def populated_db_session(db_session):
     db_session.add(travel_diary)
     db_session.commit()
     return db_session
+
+@pytest.fixture
+def session_with_one_diary(db_session):
+    diary = TravelDiary(name="Diário de Teste", directory_name="diario_de_teste")
+    db_session.add(diary)
+    db_session.commit()
+    db_session.refresh(diary)
+    return db_session, diary
