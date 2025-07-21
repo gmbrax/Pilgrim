@@ -30,6 +30,19 @@ def populated_db_session(db_session):
     db_session.commit()
     return db_session
 
+@pytest.fixture
+def session_with_an_entry(populated_db_session):
+    session = populated_db_session
+    initial_entry = Entry(
+        title="Título Original",
+        text="Texto original.",
+        date=datetime(2025, 1, 1),
+        travel_diary_id=1
+    )
+    session.add(initial_entry)
+    session.commit()
+    return session, initial_entry.id
+
 def test_create_entry_successfully(populated_db_session):
     session = populated_db_session
     service = EntryService(session)
@@ -131,3 +144,77 @@ def test_create_entry_fails_with_null_diary_id(populated_db_session):
             photos=[]
         )
     assert result is None
+
+def test_update_entry_successfully(session_with_an_entry):
+    session, entry_id = session_with_an_entry
+    service = EntryService(session)
+    entry_src = session.query(Entry).filter_by(id=entry_id).one()
+    new_date = datetime(2025, 1, 2)
+    entry_dst = Entry(
+        title="Título Atualizado",
+        text="Texto atualizado.",
+        date=new_date,
+        travel_diary_id=1,  # Mantemos o mesmo travel_diary_id
+        photos=[]
+    )
+    updated_entry = service.update(entry_src, entry_dst)
+    assert updated_entry is not None
+    assert updated_entry.id == entry_id
+    assert updated_entry.title == "Título Atualizado"
+    assert updated_entry.text == "Texto atualizado."
+    entry_in_db = session.query(Entry).filter_by(id=entry_id).one()
+    assert entry_in_db.title == "Título Atualizado"
+
+def test_update_entry_fails_if_entry_does_not_exist(db_session):
+    service = EntryService(db_session)
+    non_existent_entry = Entry(
+        title="dummy",
+        text="dummy",
+        date=datetime.now(),
+        travel_diary_id=1)
+    non_existent_entry.id = 999
+    entry_with_new_data = Entry(title="Novo Título", text="Novo Texto", date=datetime.now(), travel_diary_id=1)
+    result = service.update(non_existent_entry, entry_with_new_data)
+    assert result is None
+
+def test_update_fails_with_null_title(session_with_an_entry):
+    session, entry_id = session_with_an_entry
+    service = EntryService(session)
+    entry_src = session.query(Entry).filter_by(id=entry_id).one()
+    entry_dst = Entry(
+        title=None,
+        text="Texto atualizado.",
+        date=datetime.now(),
+        travel_diary_id=1,
+        photos=[]
+    )
+    with pytest.raises(IntegrityError):
+        service.update(entry_src, entry_dst)
+
+def test_update_fails_with_null_date(session_with_an_entry):
+    session, entry_id = session_with_an_entry
+    service = EntryService(session)
+    entry_src = session.query(Entry).filter_by(id=entry_id).one()
+    entry_dst = Entry(
+        title=entry_src.title,
+        text="Texto atualizado.",
+        date=None,
+        travel_diary_id=1,
+        photos=[]
+    )
+    with pytest.raises(IntegrityError):
+        service.update(entry_src, entry_dst)
+
+def test_update_fails_with_null_diary_id(session_with_an_entry):
+    session, entry_id = session_with_an_entry
+    service = EntryService(session)
+    entry_src = session.query(Entry).filter_by(id=entry_id).one()
+    entry_dst = Entry(
+        title=entry_src.title,
+        text="Texto atualizado.",
+        date=datetime.now(),
+        travel_diary_id=None,
+        photos=[]
+    )
+    with pytest.raises(IntegrityError):
+        service.update(entry_src, entry_dst)
