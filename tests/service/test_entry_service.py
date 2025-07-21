@@ -261,3 +261,25 @@ def test_update_fails_with_null_diary_id(session_with_an_entry):
     )
     with pytest.raises(IntegrityError):
         service.update(entry_src, entry_dst)
+
+def test_delete_successfully_removes_entry(session_with_an_entry):
+    session, entry_id = session_with_an_entry
+    service = EntryService(session)
+    entry_to_delete = service.read_by_id(entry_id)
+    assert entry_to_delete is not None
+    deleted_entry = service.delete(entry_to_delete)
+    assert deleted_entry is not None
+    assert deleted_entry.id == entry_id
+    entry_in_db = service.read_by_id(entry_id)
+    assert entry_in_db is None
+
+def test_delete_returns_none_if_entry_does_not_exist(db_session):
+    service = EntryService(db_session)
+    non_existent_entry = Entry(
+        title="dummy",
+        text="dummy",
+        date=datetime.now(),
+        travel_diary_id=1)
+    non_existent_entry.id = 999
+    result = service.delete(non_existent_entry)
+    assert result is None
