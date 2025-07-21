@@ -7,7 +7,7 @@ from pilgrim.utils import DirectoryManager
 from sqlalchemy.exc import IntegrityError
 
 from pilgrim.models.travel_diary import TravelDiary
-
+from unidecode import unidecode
 
 class TravelDiaryService:
     def __init__(self, session):
@@ -20,8 +20,10 @@ class TravelDiaryService:
         - Replaces spaces with underscores
         - Ensures name is unique by adding a suffix if needed
         """
+        transliterated_name = unidecode(name)
+
         # Remove special characters and replace spaces
-        safe_name = re.sub(r'[^\w\s-]', '', name)
+        safe_name = re.sub(r'[^\w\s-]', '', transliterated_name)
         safe_name = safe_name.strip().replace(' ', '_').lower()
 
         # Ensure we have a valid name
