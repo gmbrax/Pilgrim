@@ -39,22 +39,26 @@ def session_with_one_diary(db_session):
 
 @pytest.fixture
 def session_with_photos(session_with_one_diary):
-    """
-    Fixture que usa a session_with_one_diary e adiciona duas fotos a ela.
-    """
     session, diary = session_with_one_diary
 
+    # Usamos a mesma raiz de diretório que o mock do teste espera
+    diaries_root = "/fake/diaries_root"
+
     photo1 = Photo(
-        filepath=f"/fake/{diary.directory_name}/p1.jpg", name="Foto 1",
-        photo_hash="hash1", fk_travel_diary_id=diary.id
+        # CORREÇÃO: O caminho agora inclui a raiz e a subpasta 'images'
+        filepath=f"{diaries_root}/{diary.directory_name}/images/p1.jpg",
+        name="Foto 1",
+        photo_hash="hash1",
+        fk_travel_diary_id=diary.id
     )
     photo2 = Photo(
-        filepath=f"/fake/{diary.directory_name}/p2.jpg", name="Foto 2",
-        photo_hash="hash2", fk_travel_diary_id=diary.id
+        filepath=f"{diaries_root}/{diary.directory_name}/images/p2.jpg",
+        name="Foto 2",
+        photo_hash="hash2",
+        fk_travel_diary_id=diary.id
     )
 
     session.add_all([photo1, photo2])
     session.commit()
 
-    # Retornamos a sessão e os objetos criados para que os testes possam usá-los
     return session, [photo1, photo2]

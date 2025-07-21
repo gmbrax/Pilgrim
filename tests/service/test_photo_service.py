@@ -4,6 +4,8 @@ from pilgrim.service.photo_service import PhotoService
 import hashlib
 from unittest.mock import patch
 from pilgrim.models.photo import Photo
+from pilgrim.utils import DirectoryManager
+
 
 @patch.object(PhotoService, '_copy_photo_to_diary')
 @patch.object(PhotoService, 'hash_file', return_value="fake_hash_123")
@@ -106,3 +108,50 @@ def test_check_photo_by_hash_returns_none_when_not_found(session_with_photos):
     invalid_diary_id = 999
     result2 = service.check_photo_by_hash(existing_hash, invalid_diary_id)
     assert result2 is None
+
+def test_update_photo_metadata_successfully(session_with_photos):
+    session, photos = session_with_photos
+    service = PhotoService(session)
+    photo_to_update = photos[0]
+    photo_with_new_data = Photo(
+        filepath=photo_to_update.filepath,
+        name="Novo Nome da Foto",
+        caption="Nova legenda.",
+        photo_hash=photo_to_update.photo_hash,  # Hash não muda
+        addition_date=photo_to_update.addition_date,
+        fk_travel_diary_id=photo_to_update.fk_travel_diary_id
+    )
+    updated_photo = service.update(photo_to_update, photo_with_new_data)
+    assert updated_photo is not None
+    assert updated_photo.name == "Novo Nome da Foto"
+    assert updated_photo.caption == "Nova legenda."
+    assert updated_photo.photo_hash == "hash1"
+
+@patch.object(PhotoService, 'hash_file')
+@patch('pathlib.Path.unlink')
+@patch('pathlib.Path.exists')
+@patch.object(PhotoService, '_copy_photo_to_diary')
+@patch.object(DirectoryManager, 'get_diaries_root', return_value="/fake/diaries_root")
+def test_update_photo_with_new_file_successfully(
+    mock_get_root, mock_copy, mock_exists, mock_unlink, mock_hash, session_with_photos
+):
+    session, photos = session_with_photos
+    service = PhotoService(session)
+    photo_to_update = photos[0]
+    new_source_path = Path("/path/para/nova_imagem.jpg")
+    new_copied_path = Path(f"/fake/diaries_root/{photo_to_update.travel_diary.directory_name}/images/nova_imagem.jpg")
+    mock_copy.return_value = new_copied_path
+    mock_exists.return_value = True
+    mock_hash.return_value = "novo_hash_calculado"
+    photo_with_new_file = Photo(
+        filepath=new_source_path,
+        name=photo_to_update.name,
+        photo_hash="hash_antigo",
+        fk_travel_diary_id=photo_to_update.fk_travel_diary_id
+    )
+    updated_photo = service.update(photo_to_update, photo_with_new_file)
+    mock_copy.assert_called_once_with(new_source_path, photo_to_update.travel_diary)
+    mock_unlink.assert_called_once()
+    mock_hash.assert_called_once_with(new_copied_path)
+    assert updated_photo.filepath == str(new_copied_path)
+    assert updated_photo.photo_hash == "novo_hash_calculado"
