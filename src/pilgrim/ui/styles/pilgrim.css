@@ -1,7 +1,8 @@
 Screen {
     layout: vertical;
-    background: $surface-darken-1;
+    background: $primary-background-darken-3;
     align: center middle;
+    hatch: right $secondary-background-darken-3;
 }
 
 .EditEntryScreen-sub-header {
@@ -702,4 +703,186 @@ Screen.-modal {
     color: $warning;
     text-align: center;
     text-style: italic;
+}
+
+
+
+
+.Data_Container{
+    width: 100%;
+    layout: grid;
+    grid-size: 2 1; /* 2 colunas, 1 linha */
+    height:auto;
+
+
+}
+
+.Button_Container{
+    width: 100%;
+    layout: grid;
+    grid-size: 2 2;
+    height: auto;
+
+
+}
+
+
+.DiarySettingsScreen-DeleteDiaryButtonContainer{
+    grid-size: 2 1;
+    padding: 0 1;
+    content-align: center middle;
+    padding-bottom:1;
+
+}
+
+.DiarySettingsScreen-DeleteAllEntriesButtonContainer{
+
+    margin:0;
+    padding: 0 1;
+    height:auto;
+    padding-bottom:1;
+
+
+}
+
+.DiarySettingsScreen-DeleteAllPhotosButtonContainer{
+        margin:0;
+    padding: 0 1;
+    height:auto;
+    padding-bottom:1;
+
+}
+.DiarySettingsScreen-DeleteAllPhotosButtonContainer > Label,
+.DiarySettingsScreen-DeleteAllEntriesButtonContainer > Label{
+color: $error-lighten-3;
+padding:1;
+
+}
+
+.DiarySettingsScreen-BackupDiaryButtonContainer{
+margin:0;
+padding:0 1;
+padding-bottom:1
+
+}
+
+.DiarySettingsScreen-BackupDiaryButtonContainer > Label{
+padding:1;
+color: $success-darken-1;
+}
+
+.DiarySettingsScreen-BackupDiaryButtonContainer > Button{
+    background: $success;
+}
+
+.DiarySettingsScreen-DeleteDiaryButtonContainer > Label{
+    color: $error-lighten-3;
+    content-align: left middle;
+    padding:1
+
+
+
+}
+
+.DiarySettingsScreen-DeleteAllPhotosButtonContainer > Button,
+.DiarySettingsScreen-DeleteAllEntriesButtonContainer > Button,
+.DiarySettingsScreen-DeleteDiaryButtonContainer Button{
+
+    background: $error;
+
+    }
+
+.DiarySettingsScreen-MainContainer{
+
+    align: center top;
+    layout: vertical;
+    margin:1;
+    padding:1;
+    background: $primary-background
+
+
+}
+
+.DiarySettingsScreen-DiaryInfoContainer{
+
+    padding:1 2;
+    border:round grey;
+    height:auto;
+    width: 90%;
+    padding-bottom: 0;
+}
+
+.DiarySettingsScreen-ButtonContainer{
+    height:auto;
+    layout: grid;
+    grid-size: 3 1;
+    grid-gutter:2;
+    dock:bottom;
+}
+
+.DiarySettingsScreen-ButtonContainer > Button:first-child {
+
+    margin-left:2
+
+}
+
+.DiarySettingsScreen-ButtonContainer > Button:last-child {
+
+    margin-right:2
+
+}
+
+.DiarySettingsScreen-ButtonContainer > Button {
+    width: 100%;
+
+
+
+}
+
+
+#DiarySettingsScreen-DiaryPhotoCountContainer > Static:first-child,
+#DiarySettingsScreen-DiaryEntryCountContainer > Static:first-child,
+#DiarySettingsScreen-DiaryNameContainer >  Static:first-child{
+
+    text-align: left;
+
+    padding: 0 1;
+    padding-bottom:1
+
+}
+
+
+
+#DiarySettingsScreen-DiaryPhotoCountContainer > Static:last-child,
+#DiarySettingsScreen-DiaryEntryCountContainer > Static:last-child,
+#DiarySettingsScreen-DiaryNameContainer >  Static:last-child{
+
+    text-align: right;
+    padding:0 1
+
+}
+
+.DiarySettingsScreen-SetAutoOpenToThisDiaryContainer > Checkbox{
+
+    margin:0;
+    padding:1;
+    background: $primary-background;
+    border:none;
+
+
+
+}
+
+.DiarySettingsScreen-SetAutoOpenToThisDiaryContainer-Not-Saved-Label{
+    text-style:bold;
+    color:$warning-lighten-2;
+
+}
+
+.DiarySettingsScreen-DiaryDengerZoneContainer{
+    border: round $error-darken-1;
+    width: 90%;
+    padding: 0 1;
+    height: auto;
+    padding-bottom: 0;
 }
