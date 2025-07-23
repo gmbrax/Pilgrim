@@ -5,6 +5,8 @@ from textual.binding import Binding
 from textual import on
 
 
+
+
 class DeleteDiaryModal(Screen):
 
     BINDINGS = [
@@ -44,10 +46,18 @@ class DeleteDiaryModal(Screen):
         else:
             self.delete_button.disabled = True
 
+
     @on(Button.Pressed,"#DeleteDiaryModal-DeleteButton")
     def on_delete_button_pressed(self, event):
+
         self.result = True
+        self._delete_diary()
         self.dismiss()
+
+        from pilgrim.ui.screens.diary_list_screen import DiaryListScreen
+
+        self.app.push_screen(DiaryListScreen())
+
 
 
     @on(Button.Pressed,"#DeleteDiaryModal-CancelButton")
@@ -57,3 +67,11 @@ class DeleteDiaryModal(Screen):
 
     def action_cancel(self):
         self.dismiss()
+
+    def _delete_diary(self):
+        diary = self.app.service_manager.get_travel_diary_service().read_by_id(self.diary_id)
+        self.app.service_manager.get_travel_diary_service().delete(diary)
+        if self.app.config_manager.get_auto_open_diary() == self.diary_name:
+            self.app.config_manager.set_auto_open_diary(None)
+            self.app.config_manager.save_config()
+
