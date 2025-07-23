@@ -5,6 +5,8 @@ from textual.binding import Binding
 from textual import on
 
 
+
+
 class DeleteYesConfirmationModal(Screen):
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -45,8 +47,9 @@ class DeleteYesConfirmationModal(Screen):
         self.action_cancel()
 
     def action_cancel(self):
+        from pilgrim.ui.screens.diary_settings_screen import SettingsScreen
         self.dismiss()
-        self.app.push_screen(SettingsScreen(diary=travel_diary[0]))
+        self.app.push_screen(SettingsScreen(self.diary_id))
 
     def compose(self):
         yield Header()
