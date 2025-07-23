@@ -3,6 +3,7 @@ import re
 import shutil
 from pathlib import Path
 
+from pilgrim.models.entry import Entry
 from pilgrim.utils import DirectoryManager
 from sqlalchemy.exc import IntegrityError
 
@@ -147,3 +148,14 @@ class TravelDiaryService:
                 self.session.rollback()
                 raise ValueError(f"Could not delete diary: {str(e)}")
         return None
+
+    def delete_all_entries(self,travel_diary: TravelDiary):
+        diary = self.read_by_id(travel_diary.id)
+        if diary is not None:
+           diary.entries = []
+           self.session.commit()
+
+
+           return True
+
+        return False
