@@ -7,7 +7,7 @@ from textual.reactive import reactive
 from textual.binding import Binding
 from textual import on
 
-from pilgrim import TravelDiary
+from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.ui.screens.modals.delete_all_entries_from_diary_modal import DeleteAllEntriesModal
 from pilgrim.ui.screens.modals.delete_all_photos_from_diary_modal import DeleteAllPhotosModal
 from pilgrim.ui.screens.modals.delete_diary_modal import DeleteDiaryModal
@@ -19,21 +19,22 @@ class SettingsScreen(Screen):
         Binding("escape","cancel","Cancel"),
     ]
 
-    def __init__(self,diary:TravelDiary):
+    def __init__(self,diary_id:int):
         super().__init__()
-        self.current_diary = diary
+        self.current_diary = self.app.service_manager.get_travel_diary_service().read_by_id(diary_id)
 
         self.header = Header()
         self.footer = Footer()
         self.title = "Settings"
 
         self.diary_name = Static(self.current_diary.name,id="DiarySettingsScreen-DiaryName")
-        self.is_the_diary_set_to_auto_open =  False
-        self.diary_entry_count = Static("0")
-        self.diary_photo_count = Static("0")
-        self.save_button = Button("Save")
+        self.notify(str(self.app.config_manager))
+        self.is_the_diary_set_to_auto_open =  self.app.config_manager.get_auto_open_diary() == self.current_diary.name
+        self.diary_entry_count = Static(str(len(self.current_diary.entries)))
+        self.diary_photo_count = Static(str(len(self.current_diary.photos)))
+        self.save_button = Button("Save",id="DiarySettingsScreen-SaveButton" )
         self.cancel_button = Button("Cancel",id="DiarySettingsScreen-cancel_button")
-        self.apply_button = Button("Apply")
+        self.apply_button = Button("Apply",id="DiarySettingsScreen-ApplyButton")
         self.backup_diary_button = Button("Backup Diary")
         self.delete_diary_button = Button("Delete Diary",id="DiarySettingsScreen-DeleteDiaryButton")
         self.delete_all_entries_button = Button("Delete All Entries",id="DiarySettingsScreen-DeleteAllEntriesButton")
@@ -132,7 +133,7 @@ class SettingsScreen(Screen):
     @on(Checkbox.Changed, "#set_auto_open_to_this_diary")
     def on_checkbox_changed(self, event):
         self.is_changed =  not self.is_changed
-        self.notify("Checkboxed")
+
 
     @on(Button.Pressed, "#DiarySettingsScreen-cancel_button")
     def on_cancel_button_pressed(self, event):
@@ -154,7 +155,15 @@ class SettingsScreen(Screen):
         if self.is_changed:
             self.notify("Cancel button pressed, but changes are not saved",severity="error")
             return
-        self.app.exit()
+        self.dismiss()
+
+    @on(Button.Pressed, "#DiarySettingsScreen-SaveButton")
+    def on_save_button_pressed(self, event):
+        self.action_save()
+
+    @on(Button.Pressed, "#DiarySettingsScreen-ApplyButton")
+    def on_apply_button_pressed(self, event):
+        self.action_apply()
 
 
     def watch_is_changed(self, value):
@@ -170,7 +179,102 @@ class SettingsScreen(Screen):
         yield Footer()
 
     def on_mount(self):
-        pass
+        if self.app.config_manager.get_auto_open_diary() == self.current_diary.name:
+            self.call_after_refresh(self.set_checkbox_state)
 
     def set_checkbox_state(self):
         self.set_auto_open_to_this_diary.value = True
+
+    def _set_auto_open_diary(self,value):
+
+        self.app.config_manager.set_auto_open_diary(value)
+        self.app.config_manager.save_config()
+        self.is_changed = False
+
+    def _get_auto_open_diary(self):
+        return self.app.config_manager.get_auto_open_diary()
+
+    def _make_auto_open_diary_value(self):
+        value = None
+        if self.set_auto_open_to_this_diary.value:
+            value = self.current_diary.name
+        return value
+
+
+    def action_save(self):
+
+        if not self.is_changed:
+            self.dismiss()
+            return
+
+        value = self._make_auto_open_diary_value()
+        current_auto_open = self._get_auto_open_diary()
+
+
+        if current_auto_open is None:
+            self._set_auto_open_diary(value)
+            self.notify("Settings saved")
+            self.dismiss()
+            return
+
+
+        if current_auto_open == self.current_diary.name:
+            if value is None:
+
+                self._set_auto_open_diary(None)
+                self.notify("Auto-open disabled")
+            else:
+
+                self.is_changed = False
+                self.notify("No changes made")
+            self.dismiss()
+            return
+
+
+        if value is not None:
+
+            self._set_auto_open_diary(value)
+            self.notify(f"Auto-open changed from '{current_auto_open}' to '{self.current_diary.name}'")
+            self.dismiss()
+        else:
+
+            self.is_changed = False
+            self.notify("No changes made")
+            self.dismiss()
+
+
+    def action_apply(self):
+
+        if not self.is_changed:
+            return
+
+        value = self._make_auto_open_diary_value()
+        current_auto_open = self._get_auto_open_diary()
+
+
+        if current_auto_open is None:
+            self._set_auto_open_diary(value)
+            self.notify("Settings applied")
+            return
+
+
+        if current_auto_open == self.current_diary.name:
+            if value is None:
+
+                self._set_auto_open_diary(None)
+                self.notify("Auto-open disabled")
+            else:
+
+                self.is_changed = False
+                self.notify("No changes made")
+            return
+
+
+        if value is not None:
+
+            self._set_auto_open_diary(value)
+            self.notify(f"Auto-open changed from '{current_auto_open}' to '{self.current_diary.name}'")
+        else:
+
+            self.is_changed = False
+            self.notify("No changes made")
