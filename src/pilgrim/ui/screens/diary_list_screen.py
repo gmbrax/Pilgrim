@@ -306,13 +306,10 @@ class DiaryListScreen(Screen):
         session = self.app.service_manager.get_session()
         if session:
             backup_service = BackupService(session)
-            result_operation,result_data = backup_service.create_backup()
+            result_operation, result_data = backup_service.create_backup()
+            if result_operation:
+                self.notify(f"Backup result: {result_data}")
+            else:
+                self.notify(f"Error performing backup: {result_data}")
         else:
             self.notify("You must be logged in to perform this action")
-        if result_operation:
-            self.notify(f"Backup result: {result_data}")
-        else:
-            self.notify(f"Error performing backup {result_data}")
-            raise Exception("Error performing backup")
-            self.app.exit()
-
