@@ -9,6 +9,7 @@ from textual.containers import Vertical, Container, Horizontal
 
 from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.ui.screens.about_screen import AboutScreen
+from pilgrim.ui.screens.diary_settings_screen import SettingsScreen
 from pilgrim.ui.screens.edit_diary_modal import EditDiaryModal
 from pilgrim.ui.screens.new_diary_modal import NewDiaryModal
 from pilgrim.ui.screens.edit_entry_screen import EditEntryScreen
@@ -23,6 +24,7 @@ class DiaryListScreen(Screen):
         Binding("enter", "open_selected_diary", "Open diary"),
         Binding("e", "edit_selected_diary", "Edit diary"),
         Binding("r", "force_refresh", "Force refresh"),
+        Binding("s", "diary_settings", "Open The Selected Diary Settings"),
     ]
 
     def __init__(self):
@@ -286,3 +288,13 @@ class DiaryListScreen(Screen):
     def action_quit(self):
         """Action to quit the application"""
         self.app.exit()
+
+    def action_diary_settings(self):
+        if self.selected_diary_index is not None:
+            diary_id = self.diary_id_map.get(self.selected_diary_index)
+            if diary_id:
+                self.app.push_screen(SettingsScreen(diary_id=diary_id))
+            else:
+                self.notify("Invalid diary ID")
+        else:
+            self.notify("Select a diary to open the settings")
