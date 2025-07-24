@@ -17,7 +17,7 @@ class BackupService:
 
         with self.session.connection() as conn:
             raw_conn = conn.connection
-            dump =  dump = "\n".join(line for line in raw_conn.iterdump())
+            dump = "\n".join(line for line in raw_conn.iterdump())
 
         filename = DirectoryManager.get_config_directory() / "backup.zip"
         diaries_root_path = DirectoryManager.get_diaries_root()
