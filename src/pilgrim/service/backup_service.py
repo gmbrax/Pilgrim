@@ -16,7 +16,7 @@ class BackupService:
             raise FileNotFoundError("No Database Found")
         conn = self.session.connection().connection
         dump = "\n".join(line for line in conn.iterdump())
-        filename = str(DirectoryManager.get_config_directory()) + "/backup.zip"
+        filename = DirectoryManager.get_config_directory() / "backup.zip"
         diaries_root_path = DirectoryManager.get_diaries_root()
 
         try:
