@@ -304,8 +304,8 @@ class DiaryListScreen(Screen):
 
     def action_backup(self):
         session = self.app.service_manager.get_session()
-        backup_service = BackupService(session)
         if session:
+            backup_service = BackupService(session)
             result = backup_service.create_backup()
         else:
             self.notify("You must be logged in to perform this action")
