@@ -3,7 +3,6 @@ import re
 import shutil
 from pathlib import Path
 
-from pilgrim.models.entry import Entry
 from pilgrim.utils import DirectoryManager
 from sqlalchemy.exc import IntegrityError
 

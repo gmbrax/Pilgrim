@@ -1,13 +1,12 @@
 
 from textual.widgets import Static
 from textual.containers import Container
-from textual.widgets import Header, Footer, Label, Button,Checkbox,Input
+from textual.widgets import Header, Footer, Label, Button,Checkbox
 from textual.screen import Screen
 from textual.reactive import reactive
 from textual.binding import Binding
 from textual import on
 
-from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.ui.screens.modals.delete_all_entries_from_diary_modal import DeleteAllEntriesModal
 from pilgrim.ui.screens.modals.delete_all_photos_from_diary_modal import DeleteAllPhotosModal
 from pilgrim.ui.screens.modals.delete_diary_modal import DeleteDiaryModal

@@ -4,7 +4,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 from pilgrim.utils.config_manager import ConfigManager, SingletonMeta
-from pilgrim.utils.directory_manager import DirectoryManager
 
 @pytest.fixture
 def clean_singleton():
