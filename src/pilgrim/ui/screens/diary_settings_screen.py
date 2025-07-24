@@ -100,7 +100,6 @@ class SettingsScreen(Screen):
                                               )
 
         self.diary_denger_zone_container = Container(
-            self.backup_diary_button_container,
             self.delete_diary_button_container,
             self.delete_all_entries_button_container,
             self.delete_all_photos_button_container,
