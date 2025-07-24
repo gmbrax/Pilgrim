@@ -1,14 +1,8 @@
-from re import search
 
 import pytest
 from datetime import datetime
-from unittest.mock import Mock
-from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import sessionmaker
 
-from pilgrim.database import Base
-from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.models.entry import Entry
 from pilgrim.models.photo import Photo
 

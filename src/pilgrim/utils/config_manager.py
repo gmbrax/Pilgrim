@@ -1,5 +1,4 @@
 import os.path
-from os import PathLike
 from threading import Lock
 
 import tomli

@@ -1,13 +1,11 @@
 from typing import Optional, Tuple
-import asyncio
 
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Label, Static, OptionList, Button
+from textual.widgets import Header, Footer, Static, OptionList, Button
 from textual.binding import Binding
-from textual.containers import Vertical, Container, Horizontal
+from textual.containers import Container, Horizontal
 
-from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.ui.screens.about_screen import AboutScreen
 from pilgrim.ui.screens.diary_settings_screen import SettingsScreen
 from pilgrim.ui.screens.edit_diary_modal import EditDiaryModal
@@ -213,11 +211,11 @@ class DiaryListScreen(Screen):
     def _on_new_diary_submitted(self, result):
         """Callback after diary creation"""
         if result:  # Se result não é string vazia, o diário foi criado
-            self.notify(f"Returning to diary list...")
+            self.notify("Returning to diary list...")
             # Atualiza a lista de diários
             self.refresh_diaries()
         else:
-            self.notify(f"Creation canceled...")
+            self.notify("Creation canceled...")
 
     def _on_screen_resume(self) -> None:
         super()._on_screen_resume()

@@ -1,7 +1,6 @@
 from pilgrim.service.mocks.entry_service_mock import EntryServiceMock
 from pilgrim.service.mocks.photo_service_mock import PhotoServiceMock
 from pilgrim.service.mocks.travel_diary_service_mock import TravelDiaryServiceMock
-from pilgrim.service.photo_service import PhotoService
 from pilgrim.service.servicemanager import ServiceManager
 
 

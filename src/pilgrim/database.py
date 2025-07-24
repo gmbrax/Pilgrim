@@ -1,9 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
-from pathlib import Path
 import os
-import shutil
 
 from pilgrim.utils import ConfigManager
 

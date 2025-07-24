@@ -1,6 +1,4 @@
-import sqlite3
 import zipfile
-from pathlib import Path
 
 
 from pilgrim.utils.directory_manager import DirectoryManager
