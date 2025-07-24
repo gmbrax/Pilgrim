@@ -14,6 +14,8 @@ from pilgrim.ui.screens.edit_diary_modal import EditDiaryModal
 from pilgrim.ui.screens.new_diary_modal import NewDiaryModal
 from pilgrim.ui.screens.edit_entry_screen import EditEntryScreen
 
+from pilgrim.service.backup_service import BackupService
+
 
 class DiaryListScreen(Screen):
     TITLE = "Pilgrim - Main"
@@ -298,3 +300,13 @@ class DiaryListScreen(Screen):
                 self.notify("Invalid diary ID")
         else:
             self.notify("Select a diary to open the settings")
+
+
+    def action_backup(self):
+        session = self.app.service_manager.get_session()
+        backup_service = BackupService(session)
+        if session:
+            result = backup_service.create_backup()
+        else:
+            self.notify("You must be logged in to perform this action")
+        self.notify(f"Backup result: {result}")
