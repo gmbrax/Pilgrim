@@ -35,7 +35,7 @@ class SettingsScreen(Screen):
         self.save_button = Button("Save",id="DiarySettingsScreen-SaveButton" )
         self.cancel_button = Button("Cancel",id="DiarySettingsScreen-cancel_button")
         self.apply_button = Button("Apply",id="DiarySettingsScreen-ApplyButton")
-        self.backup_diary_button = Button("Backup Diary")
+
         self.delete_diary_button = Button("Delete Diary",id="DiarySettingsScreen-DeleteDiaryButton")
         self.delete_all_entries_button = Button("Delete All Entries",id="DiarySettingsScreen-DeleteAllEntriesButton")
         self.delete_all_photos_button = Button("Delete All Photos",id="DiarySettingsScreen-DeleteAllPhotosButton")
@@ -46,12 +46,6 @@ class SettingsScreen(Screen):
             self.delete_diary_button,
             id="DiarySettingsScreen-DeleteDiaryButtonContainer",
             classes="DiarySettingsScreen-DeleteDiaryButtonContainer Button_Container"
-        )
-        self.backup_diary_button_container = Container(
-            Label("Backup Diary:"),
-            self.backup_diary_button,
-            id="DiarySettingsScreen-BackupDiaryButtonContainer",
-            classes="DiarySettingsScreen-BackupDiaryButtonContainer Button_Container"
         )
         self.delete_all_entries_button_container = Container(
             Label("Delete All Entries:"),
