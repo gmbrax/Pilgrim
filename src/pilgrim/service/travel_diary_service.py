@@ -10,6 +10,9 @@ from sqlalchemy.exc import IntegrityError
 from pilgrim.models.travel_diary import TravelDiary
 from unidecode import unidecode
 
+from pilgrim.service.photo_service import PhotoService
+from pilgrim.service.entry_service import EntryService
+
 class TravelDiaryService:
     def __init__(self, session):
         self.session = session
@@ -155,6 +158,24 @@ class TravelDiaryService:
            diary.entries = []
            self.session.commit()
 
+
+           return True
+
+        return False
+
+    def delete_all_photos(self,travel_diary: TravelDiary):
+        diary = self.read_by_id(travel_diary.id)
+        photo_service = PhotoService(self.session)
+        entry_service = EntryService(self.session)
+        if diary is not None:
+
+           for entry in list(diary.entries):
+               entry_service.delete_all_photo_references(entry,commit=False)
+
+           for photo in list(diary.photos):
+               photo_service.delete(photo,commit=False)
+
+           self.session.commit()
 
            return True
 
