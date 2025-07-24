@@ -312,4 +312,6 @@ class DiaryListScreen(Screen):
             else:
                 self.notify(f"Error performing backup: {result_data}")
         else:
-            self.notify("You must be logged in to perform this action")
+            self.notify("Error: Session not found",severity="error")
+            self.app.exit()
+
