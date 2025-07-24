@@ -14,8 +14,11 @@ class BackupService:
         db_path = DirectoryManager.get_database_path()
         if not db_path.exists():
             raise FileNotFoundError("No Database Found")
-        conn = self.session.connection().connection
-        dump = "\n".join(line for line in conn.iterdump())
+
+        with self.session.connection() as conn:
+            raw_conn = conn.connection
+            dump =  dump = "\n".join(line for line in raw_conn.iterdump())
+
         filename = DirectoryManager.get_config_directory() / "backup.zip"
         diaries_root_path = DirectoryManager.get_diaries_root()
 
