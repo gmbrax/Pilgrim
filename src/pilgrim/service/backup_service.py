@@ -27,7 +27,7 @@ class BackupService:
                         if file_path.is_file():
                             arcname = file_path.relative_to(diaries_root_path.parent)
                             zipf.write(file_path, arcname=arcname)
-                return True, None
+                return True, filename
         except Exception as e:
             return False, str(e)
 
