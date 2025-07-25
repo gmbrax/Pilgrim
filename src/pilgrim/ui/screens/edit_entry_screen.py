@@ -9,11 +9,14 @@ from pilgrim.ui.screens.modals.add_photo_modal import AddPhotoModal
 from pilgrim.ui.screens.modals.confirm_delete_modal import ConfirmDeleteModal
 from pilgrim.ui.screens.modals.edit_photo_modal import EditPhotoModal
 from pilgrim.ui.screens.rename_entry_modal import RenameEntryModal
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, TextArea, OptionList
+
+from pilgrim.ui.screens.widgets.photo_sidebar import PhotoSidebar
 
 
 class EditEntryScreen(Screen):
@@ -84,26 +87,7 @@ class EditEntryScreen(Screen):
         # Text area
         self.text_entry = TextArea(id="text_entry", classes="EditEntryScreen-text-entry")
 
-        # Sidebar widgets
-        self.sidebar_title = Static("Photos", classes="EditEntryScreen-sidebar-title")
-        self.photo_list = OptionList(id="photo_list", classes="EditEntryScreen-sidebar-photo-list")
-        self.photo_info = Static("", classes="EditEntryScreen-sidebar-photo-info")
-        self.help_text = Static("", classes="EditEntryScreen-sidebar-help")
-
-        # Sidebar container: photo list and info in a flexible container, help_text fixed at bottom
-        self.sidebar_content = Vertical(
-            self.photo_list,
-            self.photo_info,
-            id="sidebar_content",
-            classes="EditEntryScreen-sidebar-content"
-        )
-        self.sidebar = Vertical(
-            self.sidebar_title,
-            self.sidebar_content,
-            self.help_text,  # Always at the bottom, never scrolls
-            id="sidebar",
-            classes="EditEntryScreen-sidebar"
-        )
+        self.sidebar = PhotoSidebar()
 
         # Main container
         self.main = Container(
@@ -281,91 +265,75 @@ class EditEntryScreen(Screen):
 
         self.call_after_refresh(self._finish_display_update)
 
-    def _update_sidebar_content(self):
-        """Updates the sidebar content with photos for the current diary"""
-        try:
-            self._load_photos_for_diary(self.diary_id)
-
-            # Clear existing options safely
-            self.photo_list.clear_options()
-
-            # Add the 'Ingest Photo' option at the top
-            self.photo_list.add_option("➕ Ingest Photo")
-
-            if not self.cached_photos:
-                self.photo_info.update("No photos found for this diary")
-                self.help_text.update("No photos available\n\nUse Photo Manager to add photos")
-                return
-
-            # Add photos to the list with hash
-            for photo in self.cached_photos:
-                # Show name and hash in the list
-                photo_hash = str(photo.photo_hash)[:8]
-                self.photo_list.add_option(f"{photo.name} \\[{photo_hash}\]")
-
-            self.photo_info.update(f"{len(self.cached_photos)} photos in diary")
-
-            # Updated help a text with hash information
-            help_text = (
-                "[b]Sidebar Shortcuts[/b]\n"
-                "[b][green]i[/green][/b]: Insert photo into entry\n"
-                "[b][green]n[/green][/b]: Add new photo\n"
-                "[b][green]d[/green][/b]: Delete selected photo\n"
-                "[b][green]e[/green][/b]: Edit selected photo\n"
-                "[b][yellow]Tab[/yellow][/b]: Back to editor\n"
-                "[b][yellow]F8[/yellow][/b]: Show/hide sidebar\n"
-                "[b]📝 Photo References[/b]\n"
-                "\\[\\[photo::hash\\]\\]"
-            )
-            self.help_text.update(help_text)
-        except Exception as e:
-            self.notify(f"Error updating sidebar: {str(e)}", severity="error")
-            # Set fallback content
-            self.photo_info.update("Error loading photos")
-            self.help_text.update("Error loading sidebar content")
-
-    def _load_photos_for_diary(self, diary_id: int):
-        """Loads all photos for the specific diary"""
-        try:
-            service_manager = self.app.service_manager
-            photo_service = service_manager.get_photo_service()
-
-            all_photos = photo_service.read_all()
-            self.cached_photos = [photo for photo in all_photos if photo.fk_travel_diary_id == diary_id]
-            self.cached_photos.sort(key=lambda x: x.id)
-            return self.cached_photos
-
-        except Exception as e:
-            self.notify(f"Error loading photos: {str(e)}")
-            return []
-
-
     def action_toggle_sidebar(self):
-        """Toggles the sidebar visibility"""
-        try:
-            self.sidebar_visible = not self.sidebar_visible
+        self.sidebar_visible = not self.sidebar_visible
+        self.sidebar.display = self.sidebar_visible
+        if self.sidebar_visible:
+            # Chama o novo worker síncrono
+            self.run_worker(self._load_and_update_sidebar_worker, exclusive=True, thread=True)
 
-            if self.sidebar_visible:
-                self.sidebar.display = True
-                self._update_sidebar_content()
-                # Automatically focus the sidebar when opening
-                self.sidebar_focused = True
-                self.photo_list.focus()
-                self._sidebar_opened_once = True
-            else:
-                self.sidebar.display = False
-                self.sidebar_focused = False  # Reset focus when hiding
-                self.text_entry.focus()  # Return focus to editor
+            self.sidebar.focus()
+        else:
+            self.text_entry.focus()
 
-            # Update footer after context change
-            self._update_footer_context()
-            self.refresh(layout=True)
-        except Exception as e:
-            self.notify(f"Error toggling sidebar: {str(e)}", severity="error")
-            # Reset state on error
-            self.sidebar_visible = False
-            self.sidebar_focused = False
-            self.sidebar.display = False
+    def _load_and_update_sidebar_worker(self):
+        """
+        Worker que roda em uma thread para carregar as fotos sem travar a UI.
+        """
+        # A lógica de buscar os dados pode ser feita diretamente    ,
+        # pois já estamos em uma thread de segundo plano.
+        photo_service = self.app.service_manager.get_photo_service()
+        all_photos = photo_service.read_all()
+        self.cached_photos = [p for p in all_photos if p.fk_travel_diary_id == self.diary_id]
+
+        # MUDANÇA 2: Não podemos atualizar a UI diretamente de outra thread.
+        # Usamos 'call_from_thread' para agendar a atualização de forma segura.
+        self.app.call_from_thread(self.sidebar.update_photo_list, self.cached_photos)
+
+    def on_photo_sidebar_insert_photo_reference(self, message: PhotoSidebar.InsertPhotoReference):
+        """Reage à mensagem para inserir uma referência de foto."""
+        photo_ref = f"[[photo::{message.photo_hash}]]"
+        self.text_entry.insert(photo_ref)
+        self.text_entry.focus()
+
+    def on_photo_sidebar_ingest_new_photo(self, message: PhotoSidebar.IngestNewPhoto):
+        """Reage à mensagem para ingerir uma nova foto."""
+
+        def refresh_sidebar_after_add(result):
+            if result:
+                self.notify(f"Photo '{result['name']}' added successfully!")
+                self.run_worker(self._load_and_update_sidebar)
+
+        self.app.push_screen(
+            AddPhotoModal(diary_id=self.diary_id),
+            refresh_sidebar_after_add
+        )
+
+    def on_photo_sidebar_edit_photo(self, message: PhotoSidebar.EditPhoto):
+        """Reage à mensagem para editar uma foto."""
+
+        def refresh_sidebar_after_edit(result):
+            if result:
+                self.notify(f"Photo '{result['name']}' updated successfully!")
+                self.run_worker(self._load_and_update_sidebar)
+
+        self.app.push_screen(
+            EditPhotoModal(photo=message.photo),
+            refresh_sidebar_after_edit
+        )
+
+    def on_photo_sidebar_delete_photo(self, message: PhotoSidebar.DeletePhoto):
+        """Reage à mensagem para deletar uma foto."""
+
+        def refresh_sidebar_after_delete(result):
+            if result:
+                self.notify(f"Photo '{message.photo.name}' deleted successfully!")
+                self.run_worker(self._load_and_update_sidebar)
+
+        self.app.push_screen(
+            ConfirmDeleteModal(photo=message.photo),
+            refresh_sidebar_after_delete
+        )
 
     def action_toggle_focus(self):
         """Toggles focus between editor and sidebar"""
@@ -383,248 +351,8 @@ class EditEntryScreen(Screen):
         # Update footer after focus change
         self._update_footer_context()
 
-    def action_insert_photo(self):
-        """Insert selected photo into text"""
 
-        if not self.sidebar_focused or not self.sidebar_visible:
-            self.notify("Use F8 to open the sidebar first.", severity="warning")
-            return
 
-        # Get a selected photo
-        if self.photo_list.highlighted is None:
-            self.notify("No photo selected", severity="warning")
-            return
-
-        # Adjust index because of 'Ingest Photo' at the top
-        photo_index = self.photo_list.highlighted - 1
-
-        self._load_photos_for_diary(self.diary_id)
-        if photo_index < 0 or photo_index >= len(self.cached_photos):
-            self.notify("No photo selected", severity="warning")
-            return
-
-        selected_photo = self.cached_photos[photo_index]
-        photo_hash = selected_photo.photo_hash[:8]
-
-        # Insert photo reference using hash format without escaping
-        # Using raw string to avoid markup conflicts with [[
-        photo_ref = f"[[photo::{photo_hash}]]"
-
-        # Insert at the cursor position
-        self.text_entry.insert(photo_ref)
-
-        # Switch focus back to editor
-        self.sidebar_focused = False
-        self.text_entry.focus()
-
-        # Update footer context
-        self._update_footer_context()
-
-        # Show selected photo info
-        photo_details = f"📷 {selected_photo.name}\n"
-        photo_details += f"🔗 {photo_hash}\n"
-        photo_details += f"📅 {selected_photo.addition_date}\n"
-        photo_details += f"💬 {selected_photo.caption or 'No caption'}\n"
-        photo_details += "[b]Reference formats:[/b]\n"
-        photo_details += f"\\[\\[photo::{photo_hash}\\]\\]"
-
-        self.photo_info.update(photo_details)
-
-        # Show notification without escaping brackets
-        self.notify(f"Inserted photo: {selected_photo.name} \\[{photo_hash}\\]", severity="information")
-
-    def action_ingest_new_photo(self):
-        """Ingest a new photo using modal"""
-        if not self.sidebar_focused or not self.sidebar_visible:
-            self.notify("Use F8 to open the sidebar first.", severity="warning")
-            return
-
-        # Open add photo modal
-        try:
-            self.notify("Trying to push the modal screen...")
-            self.app.push_screen(
-                AddPhotoModal(diary_id=self.diary_id),
-                self.handle_add_photo_result
-            )
-        except Exception as e:
-            self.notify(f"Error: {str(e)}", severity="error")
-            self.app.notify("Error: {str(e)}", severity="error")
-
-    def handle_add_photo_result(self, result: dict | None) -> None:
-        """Callback that processes the add photo modal result."""
-        if result is None:
-            self.notify("Add photo cancelled")
-            return
-
-        # Photo was already created in the modal, just refresh the sidebar
-        if self.sidebar_visible:
-            self._update_sidebar_content()
-        self.notify(f"Photo '{result['name']}' added successfully!")
-
-    async def _async_create_photo(self, photo_data: dict):
-        """Creates a new photo asynchronously"""
-        try:
-            service_manager = self.app.service_manager
-            photo_service = service_manager.get_photo_service()
-
-            current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            new_photo = photo_service.create(
-                filepath=Path(photo_data["filepath"]),
-                name=photo_data["name"],
-                travel_diary_id=self.diary_id,
-                addition_date=current_date,
-                caption=photo_data["caption"]
-            )
-
-            if new_photo:
-                self.notify(f"Photo '{new_photo.name}' added successfully!")
-                # Refresh sidebar content
-                if self.sidebar_visible:
-                    self._update_sidebar_content()
-            else:
-                self.notify("Error creating photo")
-
-        except Exception as e:
-            self.notify(f"Error creating photo: {str(e)}")
-
-    def action_delete_photo(self):
-        """Delete selected photo"""
-        if not self.sidebar_focused or not self.sidebar_visible:
-            self.notify("Use F8 to open the sidebar first.", severity="warning")
-            return
-
-        if self.photo_list.highlighted is None:
-            self.notify("No photo selected", severity="warning")
-            return
-
-        # Adjust index because of 'Ingest Photo' at the top
-        photo_index = self.photo_list.highlighted - 1
-
-        photos = self._load_photos_for_diary(self.diary_id)
-        if photo_index < 0 or photo_index >= len(photos):
-            self.notify("No photo selected", severity="warning")
-            return
-
-        selected_photo = photos[photo_index]
-
-        # Open confirm delete modal
-        self.app.push_screen(
-            ConfirmDeleteModal(photo=selected_photo),
-            self.handle_delete_photo_result
-        )
-
-    def handle_delete_photo_result(self, result: bool) -> None:
-        """Callback that processes the delete photo modal result."""
-        if result:
-            # Get the selected photo with an adjusted index
-            photos = self._load_photos_for_diary(self.diary_id)
-            photo_index = self.photo_list.highlighted - 1  # Adjust for 'Ingest Photo' at top
-
-            if self.photo_list.highlighted is None or photo_index < 0 or photo_index >= len(photos):
-                self.notify("Photo no longer available", severity="error")
-                return
-
-            selected_photo = photos[photo_index]
-
-            # Schedule async deletion
-            self.call_later(self._async_delete_photo, selected_photo)
-        else:
-            self.notify("Delete cancelled")
-
-    async def _async_delete_photo(self, photo: Photo):
-        """Deletes a photo asynchronously"""
-        try:
-            service_manager = self.app.service_manager
-            photo_service = service_manager.get_photo_service()
-
-            result = photo_service.delete(photo)
-
-            if result:
-                self.notify(f"Photo '{photo.name}' deleted successfully!")
-                # Refresh sidebar content
-                if self.sidebar_visible:
-                    self._update_sidebar_content()
-            else:
-                self.notify("Error deleting photo")
-
-        except Exception as e:
-            self.notify(f"Error deleting photo: {str(e)}")
-
-    def action_edit_photo(self):
-        """Edit selected photo using modal"""
-        if not self.sidebar_focused or not self.sidebar_visible:
-            self.notify("Use F8 to open the sidebar first.", severity="warning")
-            return
-
-        if self.photo_list.highlighted is None:
-            self.notify("No photo selected", severity="warning")
-            return
-
-        # Adjust index because of 'Ingest Photo' at the top
-        photo_index = self.photo_list.highlighted - 1
-
-        photos = self._load_photos_for_diary(self.diary_id)
-        if photo_index < 0 or photo_index >= len(photos):
-            self.notify("No photo selected", severity="warning")
-            return
-
-        selected_photo = photos[photo_index]
-
-        # Open edit photo modal
-        self.app.push_screen(
-            EditPhotoModal(photo=selected_photo),
-            self.handle_edit_photo_result
-        )
-
-    def handle_edit_photo_result(self, result: dict | None) -> None:
-        """Callback that processes the edit photo modal result."""
-        if result is None:
-            self.notify("Edit photo cancelled")
-            return
-
-        # Get the selected photo with adjusted index
-        photos = self._load_photos_for_diary(self.diary_id)
-        photo_index = self.photo_list.highlighted - 1  # Adjust for 'Ingest Photo' at top
-
-        if self.photo_list.highlighted is None or photo_index < 0 or photo_index >= len(photos):
-            self.notify("Photo no longer available", severity="error")
-            return
-
-        selected_photo = photos[photo_index]
-
-        # Schedule async update
-        self.call_later(self._async_update_photo, selected_photo, result)
-
-    async def _async_update_photo(self, original_photo: Photo, photo_data: dict):
-        """Updates a photo asynchronously"""
-        try:
-            service_manager = self.app.service_manager
-            photo_service = service_manager.get_photo_service()
-
-            # Create updated photo object
-            updated_photo = Photo(
-                filepath=photo_data["filepath"],
-                name=photo_data["name"],
-                addition_date=original_photo.addition_date,
-                caption=photo_data["caption"],
-                entries=original_photo.entries if original_photo.entries is not None else [],
-                id=original_photo.id,
-                photo_hash=original_photo.photo_hash,
-            )
-
-            result = photo_service.update(original_photo, updated_photo)
-
-            if result:
-                self.notify(f"Photo '{updated_photo.name}' updated successfully!")
-                # Refresh sidebar content
-                if self.sidebar_visible:
-                    self._update_sidebar_content()
-            else:
-                self.notify("Error updating photo")
-
-        except Exception as e:
-            self.notify(f"Error updating photo: {str(e)}")
 
     def _get_linked_photos_from_text(self) -> Optional[List[Photo]]:
         """
