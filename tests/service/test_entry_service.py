@@ -261,3 +261,46 @@ def test_delete_returns_none_if_entry_does_not_exist(db_session):
     non_existent_entry.id = 999
     result = service.delete(non_existent_entry)
     assert result is None
+
+def test_delete_references_for_specific_photo(entry_with_photo_references):
+    session, entry = entry_with_photo_references
+    service = EntryService(session)
+    updated_entry = service.delete_references_for_specific_photo(entry, "aaaaaaaa")
+    assert "[[photo::aaaaaaaa]]" not in updated_entry.text
+    assert "[[photo::bbbbbbbb]]" in updated_entry.text
+
+def test_delete_specific_photo_reference_does_nothing_if_no_match(entry_with_photo_references):
+    session, entry = entry_with_photo_references
+    service = EntryService(session)
+
+    original_text = entry.text
+    updated_entry = service.delete_references_for_specific_photo(entry, "cccccccc")
+    assert updated_entry.text == original_text
+
+def test_delete_all_photo_references_removes_all_refs(entry_with_photo_references):
+    session, entry = entry_with_photo_references
+    service = EntryService(session)
+    updated_entry = service.delete_all_photo_references(entry)
+    assert "[[photo::aaaaaaaa]]" not in updated_entry.text
+    assert "[[photo::bbbbbbbb]]" not in updated_entry.text
+
+def test_delete_all_photo_references_uses_truncated_hash(session_with_one_diary):
+    session, diary = session_with_one_diary
+    service = EntryService(session)
+    long_hash_photo = Photo(
+        filepath="long.jpg", name="Long",
+        photo_hash="1234567890abcdef",  # Hash com 16 caracteres
+        fk_travel_diary_id=diary.id
+    )
+    entry = Entry(
+        title="Teste de Hash Curto",
+        text="Referência com hash truncado [[photo::12345678]].",  # Texto usa só os 8 primeiros
+        date=datetime.now(),
+        travel_diary_id=diary.id
+    )
+    entry.photos.append(long_hash_photo)
+    session.add_all([long_hash_photo, entry])
+    session.commit()
+    updated_entry = service.delete_all_photo_references(entry)
+    expected_text = "Referência com hash truncado                   ."
+    assert "[[photo::12345678]]" not in updated_entry.text
