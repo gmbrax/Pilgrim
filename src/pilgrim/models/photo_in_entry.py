@@ -1,6 +1,6 @@
 from sqlalchemy import Table, Column, Integer, ForeignKey
 
-from ..database import Base
+from pilgrim.database import Base
 
 photo_entry_association = Table('photo_entry_association', Base.metadata,
 Column('id', Integer, primary_key=True, autoincrement=True),

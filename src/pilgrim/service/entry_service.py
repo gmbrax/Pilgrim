@@ -1,9 +1,10 @@
+import re
 from datetime import datetime
 from typing import List
 
-from ..models.entry import Entry
-from ..models.travel_diary import TravelDiary
-from ..models.photo import Photo  # ✨ Importe o modelo Photo
+from pilgrim.models.entry import Entry
+from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.models.photo import Photo  # ✨ Importe o modelo Photo
 
 
 class EntryService:
@@ -54,3 +55,24 @@ class EntryService:
             self.session.commit()
             return excluded
         return None
+
+
+    def delete_references_for_specific_photo(self, entry: Entry, photo_hash: str) -> Entry:
+        regex = r"\[\[photo::" + re.escape(photo_hash) + r"\]\]"
+        entry.text = re.sub(regex, lambda match: ' ' * len(match.group(0)), entry.text)
+
+        self.session.commit()
+        self.session.refresh(entry)
+
+        return entry
+
+    def delete_all_photo_references(self, entry: Entry, commit=True) -> Entry:
+        if not entry.photos:
+            return entry
+        photo_hashes = {photo.photo_hash[:8] for photo in entry.photos}
+        regex = r"\[\[photo::(" + "|".join(re.escape(h) for h in photo_hashes) + r")\]\]"
+        entry.text = re.sub(regex, lambda match: ' ' * len(match.group(0)), entry.text)
+        if commit:
+            self.session.commit()
+            self.session.refresh(entry)
+        return entry

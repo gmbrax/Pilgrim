@@ -141,7 +141,7 @@ class PhotoService:
             return original
         return None
 
-    def delete(self, photo_src: Photo) -> Photo | None:
+    def delete(self, photo_src: Photo, commit=True) -> Photo | None:
         excluded = self.read_by_id(photo_src.id)
         if excluded:
             # Store photo data before deletion
@@ -162,7 +162,8 @@ class PhotoService:
                 file_path.unlink()
             
             self.session.delete(excluded)
-            self.session.commit()
+            if commit:
+                self.session.commit()
             
             return deleted_photo
         return None

@@ -1,7 +1,8 @@
 Screen {
     layout: vertical;
-    background: $surface-darken-1;
+    background: $primary-background-darken-3;
     align: center middle;
+    hatch: right $secondary-background-darken-3;
 }
 
 .EditEntryScreen-sub-header {
@@ -623,4 +624,265 @@ Screen.-modal {
 .ConfirmDeleteModal-Button {
     margin: 0 1;
     width: 1fr;
+}
+
+.DeleteYesConfirmationModal-DeleteModalContainer,
+.DeleteDiaryModal-MainContainer {
+    align: center middle;
+    layout: vertical;
+    margin: 2;
+    padding: 2;
+    background: $primary-background;
+    height: auto;
+    width: auto;
+    min-width: 80%;
+    max-width: 95%;
+    border: solid $primary;
+}
+
+/* Labels de texto */
+.DeleteYesConfirmationModal-DeleteModalContainer > Label,
+.DeleteDiaryModal-MainContainer > Label {
+    margin: 1 0;
+    padding: 0 1;
+    color: $error;
+    text-align: center;
+    width: 100%;
+}
+
+/* Input fields */
+.DeleteYesConfirmationModal-DeleteModalContainer > Input,
+.DeleteDiaryModal-MainContainer > Input {
+    margin: 1 0;
+    width: 100%;
+    height: 3;
+}
+
+/* Container dos botões */
+.DeleteYesConfirmationModal-DeleteButtonContainer,
+.DeleteDiaryModal-ButtonContainer {
+    layout: horizontal;
+    align: center middle;
+    margin: 2 0 0 0;
+    height: auto;
+    width: 100%;
+    padding: 0;
+}
+
+/* Botões individuais */
+.DeleteYesConfirmationModal-DeleteButtonContainer > Button,
+.DeleteDiaryModal-ButtonContainer > Button {
+    width: 45%;
+    margin: 0 1;
+    height: 3;
+}
+
+/* Botão de delete (primeiro botão) */
+.DeleteYesConfirmationModal-DeleteButtonContainer > Button:first-child,
+.DeleteDiaryModal-ButtonContainer > Button:first-child {
+    background: $error-darken-1;
+}
+
+/* Botão de cancel */
+.DeleteYesConfirmationModal-DeleteButtonContainer > Button:last-child,
+.DeleteDiaryModal-ButtonContainer > Button:last-child {
+    background: $surface;
+}
+
+/* Estados disabled para botões de delete */
+.DeleteYesConfirmationModal-DeleteButtonContainer > Button:first-child:disabled,
+.DeleteDiaryModal-ButtonContainer > Button:first-child:disabled {
+    background: $surface-lighten-1;
+    color: $text-muted;
+}
+
+/* Espaçamento específico para labels secundários */
+#DeleteYesConfirmationModal-SecondHeadText {
+    margin: 1 0;
+    padding: 0 1;
+    color: $warning;
+    text-align: center;
+    text-style: italic;
+}
+
+
+
+
+.Data_Container{
+    width: 100%;
+    layout: grid;
+    grid-size: 2 1; /* 2 colunas, 1 linha */
+    height:auto;
+
+
+}
+
+.Button_Container{
+    width: 100%;
+    layout: grid;
+    grid-size: 2 2;
+    height: auto;
+
+
+}
+
+
+.DiarySettingsScreen-DeleteDiaryButtonContainer{
+    grid-size: 2 1;
+    padding: 0 1;
+    content-align: center middle;
+    padding-bottom:1;
+
+}
+
+.DiarySettingsScreen-DeleteAllEntriesButtonContainer{
+
+    margin:0;
+    padding: 0 1;
+    height:auto;
+    padding-bottom:1;
+
+
+}
+
+.DiarySettingsScreen-DeleteAllPhotosButtonContainer{
+        margin:0;
+    padding: 0 1;
+    height:auto;
+    padding-bottom:1;
+
+}
+.DiarySettingsScreen-DeleteAllPhotosButtonContainer > Label,
+.DiarySettingsScreen-DeleteAllEntriesButtonContainer > Label{
+color: $error-lighten-3;
+padding:1;
+
+}
+
+.DiarySettingsScreen-BackupDiaryButtonContainer{
+margin:0;
+padding:0 1;
+padding-bottom:1
+
+}
+
+.DiarySettingsScreen-BackupDiaryButtonContainer > Label{
+padding:1;
+color: $success-darken-1;
+}
+
+.DiarySettingsScreen-BackupDiaryButtonContainer > Button{
+    background: $success;
+}
+
+.DiarySettingsScreen-DeleteDiaryButtonContainer > Label{
+    color: $error-lighten-3;
+    content-align: left middle;
+    padding:1
+
+
+
+}
+
+.DiarySettingsScreen-DeleteAllPhotosButtonContainer > Button,
+.DiarySettingsScreen-DeleteAllEntriesButtonContainer > Button,
+.DiarySettingsScreen-DeleteDiaryButtonContainer Button{
+
+    background: $error;
+
+    }
+
+.DiarySettingsScreen-MainContainer{
+
+    align: center top;
+    layout: vertical;
+    margin:1;
+    padding:1;
+    background: $primary-background
+
+
+}
+
+.DiarySettingsScreen-DiaryInfoContainer{
+
+    padding:1 2;
+    border:round grey;
+    height:auto;
+    width: 90%;
+    padding-bottom: 0;
+}
+
+.DiarySettingsScreen-ButtonContainer{
+    height:auto;
+    layout: grid;
+    grid-size: 3 1;
+    grid-gutter:2;
+    dock:bottom;
+}
+
+.DiarySettingsScreen-ButtonContainer > Button:first-child {
+
+    margin-left:2
+
+}
+
+.DiarySettingsScreen-ButtonContainer > Button:last-child {
+
+    margin-right:2
+
+}
+
+.DiarySettingsScreen-ButtonContainer > Button {
+    width: 100%;
+
+
+
+}
+
+
+#DiarySettingsScreen-DiaryPhotoCountContainer > Static:first-child,
+#DiarySettingsScreen-DiaryEntryCountContainer > Static:first-child,
+#DiarySettingsScreen-DiaryNameContainer >  Static:first-child{
+
+    text-align: left;
+
+    padding: 0 1;
+    padding-bottom:1
+
+}
+
+
+
+#DiarySettingsScreen-DiaryPhotoCountContainer > Static:last-child,
+#DiarySettingsScreen-DiaryEntryCountContainer > Static:last-child,
+#DiarySettingsScreen-DiaryNameContainer >  Static:last-child{
+
+    text-align: right;
+    padding:0 1
+
+}
+
+.DiarySettingsScreen-SetAutoOpenToThisDiaryContainer > Checkbox{
+
+    margin:0;
+    padding:1;
+    background: $primary-background;
+    border:none;
+
+
+
+}
+
+.DiarySettingsScreen-SetAutoOpenToThisDiaryContainer-Not-Saved-Label{
+    text-style:bold;
+    color:$warning-lighten-2;
+
+}
+
+.DiarySettingsScreen-DiaryDengerZoneContainer{
+    border: round $error-darken-1;
+    width: 90%;
+    padding: 0 1;
+    height: auto;
+    padding-bottom: 0;
 }

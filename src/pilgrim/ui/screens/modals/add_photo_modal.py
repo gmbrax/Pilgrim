@@ -1,11 +1,9 @@
-import os
 from pathlib import Path
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Static, Input, Button
 from textual.containers import Horizontal, Container
 from .file_picker_modal import FilePickerModal
-import hashlib
 
 class AddPhotoModal(Screen):
     """Modal for adding a new photo"""

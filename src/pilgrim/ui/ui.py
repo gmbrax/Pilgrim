@@ -37,6 +37,11 @@ class UIApp(App):
                 "Open About Pilgrim",
                 screen.action_about_cmd
             )
+            yield SystemCommand(
+                "Backup Database",
+                "Backup the Database",
+                screen.action_backup
+            )
 
         elif isinstance(screen, AboutScreen):
             yield SystemCommand(

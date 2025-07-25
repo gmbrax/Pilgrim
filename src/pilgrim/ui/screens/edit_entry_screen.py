@@ -5,11 +5,9 @@ from typing import Optional, List
 
 from pilgrim.models.entry import Entry
 from pilgrim.models.photo import Photo
-from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.ui.screens.modals.add_photo_modal import AddPhotoModal
 from pilgrim.ui.screens.modals.confirm_delete_modal import ConfirmDeleteModal
 from pilgrim.ui.screens.modals.edit_photo_modal import EditPhotoModal
-from pilgrim.ui.screens.modals.file_picker_modal import FilePickerModal
 from pilgrim.ui.screens.rename_entry_modal import RenameEntryModal
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -189,7 +187,7 @@ class EditEntryScreen(Screen):
         """Ensures the diary info widget is always updated with current diary name"""
         try:
             self.diary_info.update(f"Diary: {self.diary_name}")
-        except Exception as e:
+        except Exception:
             self.diary_info.update(f"Diary: {self.diary_id}")
 
     def refresh_entries(self):
@@ -427,7 +425,7 @@ class EditEntryScreen(Screen):
         photo_details += f"🔗 {photo_hash}\n"
         photo_details += f"📅 {selected_photo.addition_date}\n"
         photo_details += f"💬 {selected_photo.caption or 'No caption'}\n"
-        photo_details += f"[b]Reference formats:[/b]\n"
+        photo_details += "[b]Reference formats:[/b]\n"
         photo_details += f"\\[\\[photo::{photo_hash}\\]\\]"
 
         self.photo_info.update(photo_details)
@@ -745,8 +743,8 @@ class EditEntryScreen(Screen):
         if selected_photo.caption:
             photo_details += f"Caption: {selected_photo.caption}\n"
         else:
-            photo_details += f"Caption: No Caption\n"
-        photo_details += f"[b]Reference formats:[/b]\n"
+            photo_details += "Caption: No Caption\n"
+        photo_details += "[b]Reference formats:[/b]\n"
         photo_details += f"\\[\\[photo::{photo_hash}]]"
 
         self.photo_info.update(photo_details)

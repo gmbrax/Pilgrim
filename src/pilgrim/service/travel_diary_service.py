@@ -6,8 +6,11 @@ from pathlib import Path
 from pilgrim.utils import DirectoryManager
 from sqlalchemy.exc import IntegrityError
 
-from ..models.travel_diary import TravelDiary
+from pilgrim.models.travel_diary import TravelDiary
+from unidecode import unidecode
 
+from pilgrim.service.photo_service import PhotoService
+from pilgrim.service.entry_service import EntryService
 
 class TravelDiaryService:
     def __init__(self, session):
@@ -20,8 +23,10 @@ class TravelDiaryService:
         - Replaces spaces with underscores
         - Ensures name is unique by adding a suffix if needed
         """
+        transliterated_name = unidecode(name)
+
         # Remove special characters and replace spaces
-        safe_name = re.sub(r'[^\w\s-]', '', name)
+        safe_name = re.sub(r'[^\w\s-]', '', transliterated_name)
         safe_name = safe_name.strip().replace(' ', '_').lower()
 
         # Ensure we have a valid name
@@ -145,3 +150,32 @@ class TravelDiaryService:
                 self.session.rollback()
                 raise ValueError(f"Could not delete diary: {str(e)}")
         return None
+
+    def delete_all_entries(self,travel_diary: TravelDiary):
+        diary = self.read_by_id(travel_diary.id)
+        if diary is not None:
+           diary.entries = []
+           self.session.commit()
+
+
+           return True
+
+        return False
+
+    def delete_all_photos(self,travel_diary: TravelDiary):
+        diary = self.read_by_id(travel_diary.id)
+        photo_service = PhotoService(self.session)
+        entry_service = EntryService(self.session)
+        if diary is not None:
+
+           for entry in list(diary.entries):
+               entry_service.delete_all_photo_references(entry,commit=False)
+
+           for photo in list(diary.photos):
+               photo_service.delete(photo,commit=False)
+
+           self.session.commit()
+
+           return True
+
+        return False

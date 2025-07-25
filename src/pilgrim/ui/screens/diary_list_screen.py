@@ -1,17 +1,18 @@
 from typing import Optional, Tuple
-import asyncio
 
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Label, Static, OptionList, Button
+from textual.widgets import Header, Footer, Static, OptionList, Button
 from textual.binding import Binding
-from textual.containers import Vertical, Container, Horizontal
+from textual.containers import Container, Horizontal
 
-from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.ui.screens.about_screen import AboutScreen
+from pilgrim.ui.screens.diary_settings_screen import SettingsScreen
 from pilgrim.ui.screens.edit_diary_modal import EditDiaryModal
 from pilgrim.ui.screens.new_diary_modal import NewDiaryModal
 from pilgrim.ui.screens.edit_entry_screen import EditEntryScreen
+
+from pilgrim.service.backup_service import BackupService
 
 
 class DiaryListScreen(Screen):
@@ -23,6 +24,7 @@ class DiaryListScreen(Screen):
         Binding("enter", "open_selected_diary", "Open diary"),
         Binding("e", "edit_selected_diary", "Edit diary"),
         Binding("r", "force_refresh", "Force refresh"),
+        Binding("s", "diary_settings", "Open The Selected Diary Settings"),
     ]
 
     def __init__(self):
@@ -209,11 +211,11 @@ class DiaryListScreen(Screen):
     def _on_new_diary_submitted(self, result):
         """Callback after diary creation"""
         if result:  # Se result não é string vazia, o diário foi criado
-            self.notify(f"Returning to diary list...")
+            self.notify("Returning to diary list...")
             # Atualiza a lista de diários
             self.refresh_diaries()
         else:
-            self.notify(f"Creation canceled...")
+            self.notify("Creation canceled...")
 
     def _on_screen_resume(self) -> None:
         super()._on_screen_resume()
@@ -286,3 +288,28 @@ class DiaryListScreen(Screen):
     def action_quit(self):
         """Action to quit the application"""
         self.app.exit()
+
+    def action_diary_settings(self):
+        if self.selected_diary_index is not None:
+            diary_id = self.diary_id_map.get(self.selected_diary_index)
+            if diary_id:
+                self.app.push_screen(SettingsScreen(diary_id=diary_id))
+            else:
+                self.notify("Invalid diary ID")
+        else:
+            self.notify("Select a diary to open the settings")
+
+
+    def action_backup(self):
+        session = self.app.service_manager.get_session()
+        if session:
+            backup_service = BackupService(session)
+            result_operation, result_data = backup_service.create_backup()
+            if result_operation:
+                self.notify(f"Backup result: {result_data}")
+            else:
+                self.notify(f"Error performing backup: {result_data}")
+        else:
+            self.notify("Error: Session not found",severity="error")
+            self.app.exit()
+

@@ -1,5 +1,4 @@
 import os.path
-from os import PathLike
 from threading import Lock
 
 import tomli
@@ -46,6 +45,8 @@ class ConfigManager(metaclass=SingletonMeta):
 
             if self.__data["settings"]["diary"]["auto_open_diary_on_startup"] == "":
                 self.auto_open_diary = None
+            else:
+                self.auto_open_diary = self.__data["settings"]["diary"]["auto_open_diary_on_startup"]
             self.auto_open_new_diary = self.__data["settings"]["diary"]["auto_open_on_creation"]
         else:
             print("Error: config.toml not found.")
@@ -102,6 +103,9 @@ class ConfigManager(metaclass=SingletonMeta):
 
     def set_auto_open_diary(self, value: str):
         self.auto_open_diary = value
+
+    def get_auto_open_diary(self):
+        return self.auto_open_diary
 
     def set_auto_open_new_diary(self, value: bool):
         self.auto_open_new_diary = value
