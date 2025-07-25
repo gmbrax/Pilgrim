@@ -1,3 +1,6 @@
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -8,6 +11,8 @@ from pilgrim.database import Base
 from pilgrim.models.travel_diary import TravelDiary
 from pilgrim.models.entry import Entry
 from pilgrim.models.photo import Photo
+from pilgrim.utils import DirectoryManager
+
 
 # Todos os imports necessários para as fixtures devem estar aqui
 # ...
@@ -67,6 +72,39 @@ def session_with_photos(session_with_one_diary):
     return session, [photo1, photo2]
 
 @pytest.fixture
+def backup_test_env_files_only(tmp_path):
+    fake_config_dir = tmp_path / "config"
+    fake_diaries_root = tmp_path / "diaries"
+    fake_db_path = fake_config_dir / "database.db"
+    fake_config_dir.mkdir()
+    fake_diaries_root.mkdir()
+    with patch.object(DirectoryManager, 'get_database_path', return_value=fake_db_path), \
+            patch.object(DirectoryManager, 'get_config_directory', return_value=fake_config_dir), \
+            patch.object(DirectoryManager, 'get_diaries_root', return_value=fake_diaries_root):
+        engine = create_engine(f"sqlite:///{fake_db_path}")
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        diary = TravelDiary(name="Viagem de Teste", directory_name="viagem_de_teste")
+        session.add(diary)
+        session.commit()
+        photo_file_path_str = str(fake_diaries_root / "viagem_de_teste" / "images" / "foto1.jpg")
+        photo = Photo(filepath=photo_file_path_str, name="Foto 1", photo_hash="hash123", fk_travel_diary_id=diary.id)
+        session.add(photo)
+        session.commit()
+        photo_file_path = Path(photo_file_path_str)
+        photo_file_path.parent.mkdir(parents=True)
+        photo_file_path.touch()
+        yield {
+            "session": session,
+            "db_path": fake_db_path,
+            "config_dir": fake_config_dir,
+            "diaries_root": fake_diaries_root,
+        }
+        session.close()
+
+@pytest.fixture
 def entry_with_photo_references(session_with_one_diary):
     session, diary = session_with_one_diary
     photo1 = Photo(filepath="p1.jpg", name="P1", photo_hash="aaaaaaaa", fk_travel_diary_id=diary.id)
@@ -98,3 +136,4 @@ def session_with_multiple_entries(session_with_one_diary):
     session.commit()
 
     return session, diary
+
