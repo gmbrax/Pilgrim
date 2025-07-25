@@ -1,12 +1,12 @@
-from datetime import datetime
-
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 from pilgrim.models.entry import Entry
 from pilgrim.database import Base
 from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.models.entry import Entry
 from pilgrim.models.photo import Photo
 
 # Todos os imports necessários para as fixtures devem estar aqui
@@ -85,3 +85,16 @@ def entry_with_photo_references(session_with_one_diary):
     session.refresh(entry)
 
     return session, entry
+
+
+@pytest.fixture
+def session_with_multiple_entries(session_with_one_diary):
+    session, diary = session_with_one_diary
+    session.query(Entry).delete()
+    entry1 = Entry(title="Entrada 1", text="Texto 1", date=datetime.now(), travel_diary_id=diary.id)
+    entry2 = Entry(title="Entrada 2", text="Texto 2", date=datetime.now(), travel_diary_id=diary.id)
+
+    session.add_all([entry1, entry2])
+    session.commit()
+
+    return session, diary
