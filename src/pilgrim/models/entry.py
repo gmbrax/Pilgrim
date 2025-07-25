@@ -28,6 +28,6 @@ class Entry(Base):
         self.text = text
         self.date = date
         self.fk_travel_diary_id = travel_diary_id
-        if photos:
+        if photos is not None:
             self.photos = photos
 
