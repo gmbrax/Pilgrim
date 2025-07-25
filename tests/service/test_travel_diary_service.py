@@ -1,9 +1,12 @@
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from unittest.mock import patch, MagicMock
+
 
 import pytest
 
-from pilgrim import TravelDiary
+from pilgrim.models.photo import Photo
+from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.models.entry import Entry
 from pilgrim.service.travel_diary_service import TravelDiaryService
 
 @patch.object(TravelDiaryService, '_ensure_diary_directory')
@@ -141,3 +144,33 @@ def test_sanitize_directory_name_handles_uniqueness(db_session):
 
     third_sanitized_name = service._sanitize_directory_name("Viagem para a Praia")
     assert third_sanitized_name == "viagem_para_a_praia_2"
+
+def test_delete_all_entries_successfully(session_with_multiple_entries):
+    session, diary = session_with_multiple_entries
+    service = TravelDiaryService(session)
+    diary_id = 1
+    assert session.query(Entry).filter_by(fk_travel_diary_id=diary_id).count() == 2
+    result = service.delete_all_entries(diary)
+    assert result is True
+    assert session.query(Entry).filter_by(fk_travel_diary_id=diary_id).count() == 0
+
+@patch.object(TravelDiaryService, '_ensure_diary_directory')
+@patch('pathlib.Path.unlink')
+@patch('pathlib.Path.exists', return_value=True)
+@patch('pilgrim.utils.DirectoryManager.get_diaries_root', return_value=Path("/fake/diaries_root"))
+def test_delete_all_photos_orchestration(
+    mock_ensure_dir, mock_unlink, mock_exists, mock_get_root, entry_with_photo_references
+):
+    session, entry = entry_with_photo_references
+    diary_id = entry.fk_travel_diary_id
+    service = TravelDiaryService(session)
+    assert session.query(Photo).filter_by(fk_travel_diary_id=diary_id).count() == 2
+    assert "[[photo::" in entry.text
+    diary = session.get(TravelDiary, diary_id)
+    result = service.delete_all_photos(diary)
+    assert result is True
+    photos_after_delete = session.query(Photo).filter_by(fk_travel_diary_id=diary_id).all()
+    assert len(photos_after_delete) == 0
+    session.refresh(entry)
+    assert "[[photo::" not in entry.text
+    assert mock_unlink.call_count == 2

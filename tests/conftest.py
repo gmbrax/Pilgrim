@@ -4,9 +4,12 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
+from pilgrim.models.entry import Entry
 from pilgrim.database import Base
 from pilgrim.models.travel_diary import TravelDiary
+from pilgrim.models.entry import Entry
 from pilgrim.models.photo import Photo
 from pilgrim.utils import DirectoryManager
 
@@ -101,4 +104,36 @@ def backup_test_env_files_only(tmp_path):
         }
         session.close()
 
+@pytest.fixture
+def entry_with_photo_references(session_with_one_diary):
+    session, diary = session_with_one_diary
+    photo1 = Photo(filepath="p1.jpg", name="P1", photo_hash="aaaaaaaa", fk_travel_diary_id=diary.id)
+    photo2 = Photo(filepath="p2.jpg", name="P2", photo_hash="bbbbbbbb", fk_travel_diary_id=diary.id)
+    session.add_all([photo1, photo2])
+    session.flush()
+    entry = Entry(
+        title="Entrada com Fotos",
+        text="Texto com a foto A [[photo::aaaaaaaa]] e também a foto B [[photo::bbbbbbbb]].",
+        date=datetime.now(),
+        travel_diary_id=diary.id,
+        photos=[photo1, photo2]
+    )
+    session.add(entry)
+    session.commit()
+    session.refresh(entry)
+
+    return session, entry
+
+
+@pytest.fixture
+def session_with_multiple_entries(session_with_one_diary):
+    session, diary = session_with_one_diary
+    session.query(Entry).delete()
+    entry1 = Entry(title="Entrada 1", text="Texto 1", date=datetime.now(), travel_diary_id=diary.id)
+    entry2 = Entry(title="Entrada 2", text="Texto 2", date=datetime.now(), travel_diary_id=diary.id)
+
+    session.add_all([entry1, entry2])
+    session.commit()
+
+    return session, diary
 
