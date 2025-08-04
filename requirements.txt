@@ -1,5 +1,5 @@
 greenlet==3.2.3
-SQLAlchemy==2.0.41
+SQLAlchemy==2.0.42
 typing_extensions==4.14.1
 
 
